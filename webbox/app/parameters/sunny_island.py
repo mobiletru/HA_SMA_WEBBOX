@@ -151,7 +151,7 @@ SUNNY_ISLAND_PARAMETERS: tuple[ParameterSpec, ...] = (
         max=400,
         step=1,
         description="Maximum DC current that may flow into the battery during charging.",
-        aliases=("BatCha.ChrgCurMax",),
+        aliases=("BatCha.ChrgCurMax", "BatChrgCurMax"),
     ),
     ParameterSpec(
         key="BatChrg.FloatV",
@@ -319,6 +319,17 @@ SUNNY_ISLAND_PARAMETERS: tuple[ParameterSpec, ...] = (
         max=20000,
         step=10,
         description="Maximum power exported to the grid (zero = no feed-in).",
+    ),
+    ParameterSpec(
+        key="Grid.CurNom",
+        label="Nominal grid current",
+        group="Grid",
+        unit="A",
+        min=0,
+        max=100,
+        step=0.1,
+        description="Nominal current for the grid connection.",
+        aliases=("GdCurNom", "Gd.CurNom", "GridCurNom"),
     ),
 
     # ---- Self-consumption / energy management ---------------------------

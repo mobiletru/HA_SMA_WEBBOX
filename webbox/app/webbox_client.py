@@ -308,7 +308,7 @@ class WebBoxClient:
                 "devices": [
                     {
                         "key": device_key,
-                        "channels": [{"meta": channel, "value": value}],
+                        "channels": [{"meta": channel, "value": str(value) if value is not None else value}],
                     }
                 ]
             },
