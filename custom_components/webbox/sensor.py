@@ -16,11 +16,27 @@ from .entity import WebBoxBaseEntity, WebBoxHubEntity
 # Channel name → state_class hint. Most live readings are measurements;
 # energy totals show up as "*.E.*" or "*Wh*" and become total_increasing.
 # We only assign state_class for numeric values to avoid HA errors on string
-# channels (e.g. device roles like "Master").
+# channels (e.g. device roles like "Master", relay/operating statuses).
 _TOTAL_HINTS = ("Wh", "Total", "Energy")
 
+# Status / mode / relay / operating-state channels that are strings or enums.
+# Never assign state_class=measurement to these (common on Sunny Island clusters).
+_STATUS_HINTS = (
+    "Stt", "OpStt", "Op_", "Prio", "Rly", "Mode", "Stat", "ConStt",
+    "GdStt", "Backup", "GridCon", "Relay", "OpSttSlv"
+)
 
-def _state_class_for(name: str, unit: str | None) -> SensorStateClass | None:
+
+def _looks_like_status(name: str) -> bool:
+    n = (name or "").lower().replace("_", "").replace(".", "")
+    return any(h.lower().replace("_", "").replace(".", "") in n for h in _STATUS_HINTS)
+
+
+def _state_class_for(name: str, unit: str | None, value: Any = None) -> SensorStateClass | None:
+    if _looks_like_status(name):
+        return None
+    if value is not None and not isinstance(value, (int, float)):
+        return None
     if any(h in name for h in _TOTAL_HINTS) or (unit and unit.lower() in {"kwh", "wh", "mwh"}):
         return SensorStateClass.TOTAL_INCREASING
     return SensorStateClass.MEASUREMENT
@@ -60,14 +76,17 @@ class WebBoxOverviewSensor(WebBoxHubEntity, SensorEntity):
         super().__init__(coordinator, channel)
         self._attr_name = _friendly(channel)
         self._attr_native_unit_of_measurement = unit
-        if isinstance(initial_value, (int, float)):
-            self._attr_state_class = _state_class_for(channel, unit)
+        self._attr_state_class = _state_class_for(channel, unit, initial_value)
 
     @property
     def native_value(self) -> Any:
         overview = (self.coordinator.data or {}).get("overview") or {}
         info = overview.get(self.channel) or {}
-        return info.get("value")
+        val = info.get("value")
+        # Defensive: prevent HA core crash if a previously-numeric sensor becomes a status string
+        if self._attr_state_class is not None and isinstance(val, str):
+            return val
+        return val
 
 
 class WebBoxProcessDataSensor(WebBoxBaseEntity, SensorEntity):
@@ -81,15 +100,18 @@ class WebBoxProcessDataSensor(WebBoxBaseEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, device_key, channel, translation_label=_friendly(channel))
         self._attr_native_unit_of_measurement = unit
-        if isinstance(initial_value, (int, float)):
-            self._attr_state_class = _state_class_for(channel, unit)
+        self._attr_state_class = _state_class_for(channel, unit, initial_value)
 
     @property
     def native_value(self) -> Any:
         record = self._device_record or {}
         for ch in record.get("process", []) or []:
             if ch.get("name") == self.channel:
-                return ch.get("value")
+                val = ch.get("value")
+                # Defensive: prevent HA core crash if a previously-numeric sensor becomes a status string
+                if self._attr_state_class is not None and isinstance(val, str):
+                    return val
+                return val
         return None
 
 
