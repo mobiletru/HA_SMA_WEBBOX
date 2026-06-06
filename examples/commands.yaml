@@ -1,0 +1,91 @@
+# Example automations and scripts using the new "commands for parameters" features.
+# These work with the SMA Sunny WebBox custom integration.
+
+# 1. Simple automation: Start the inverter at sunrise, stop at sunset
+automation:
+  - alias: "Sunny Island - Daytime Operation"
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "+00:15:00"
+      - platform: sun
+        event: sunset
+        offset: "-00:30:00"
+    action:
+      - choose:
+          - conditions: "{{ trigger.event == 'sunrise' }}"
+            sequence:
+              - service: webbox.start
+                data:
+                  device_id: !input sunny_island_device   # Use a device selector in your UI automation
+          - conditions: "{{ trigger.event == 'sunset' }}"
+            sequence:
+              - service: webbox.stop
+                data:
+                  device_id: !input sunny_island_device
+
+# 2. Use the generic execute_command service (recommended for most named actions)
+automation:
+  - alias: "Enable Zero Feed-In during peak export hours"
+    trigger:
+      - platform: time
+        at: "10:00:00"
+    action:
+      - service: webbox.execute_command
+        data:
+          device_id: !input sunny_island_device
+          command: "zero_feed_in"
+
+  - alias: "Return to normal self-consumption in evening"
+    trigger:
+      - platform: time
+        at: "18:00:00"
+    action:
+      - service: webbox.execute_command
+        data:
+          device_id: !input sunny_island_device
+          command: "self_consumption"
+
+# 3. Generator control example (e.g. via a helper toggle or input_boolean)
+automation:
+  - alias: "Generator Auto by SOC when battery low"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.sunny_island_battery_soc   # adjust entity id
+        below: 25
+    action:
+      - service: webbox.execute_command
+        data:
+          device_id: !input sunny_island_device
+          command: "generator_auto_soc"
+
+# 4. Script example - "Force a full charge cycle tonight"
+script:
+  force_full_charge_tonight:
+    alias: "Force Full Charge Cycle"
+    sequence:
+      - service: webbox.execute_command
+        data:
+          device_id: !input sunny_island_device
+          command: "force_full_charge"
+      - delay: "00:05:00"
+      - service: notify.mobile_app_phone
+        data:
+          message: "Full charge cycle triggered on Sunny Island"
+
+# 5. Using the low-level set_parameter for anything not covered by named commands
+# (still very useful)
+automation:
+  - alias: "Set specific charge current limit via script"
+    sequence:
+      - service: webbox.set_parameter
+        data:
+          device_id: !input sunny_island_device
+          device_key: "SI-44M:1234567890"   # you can find this in developer tools / states
+          channel: "BatChrg.ChrgCurMax"
+          value: 80
+
+# Tip: Use the Button entities created by the integration for dashboard cards:
+# type: button
+# entity: button.sunny_island_roof_start
+# name: Start Inverter

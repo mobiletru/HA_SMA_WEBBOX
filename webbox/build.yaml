@@ -1,0 +1,15 @@
+build_from:
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.21
+  amd64: ghcr.io/home-assistant/amd64-base:3.21
+labels:
+  org.opencontainers.image.title: "WebBox Dashboard"
+  org.opencontainers.image.description: "Modern dashboard for SMA Sunny WebBox data loggers"
+  org.opencontainers.image.source: "https://github.com/mobiletru/ha_addon_webbox"
+  org.opencontainers.image.licenses: "MIT"
+  io.hass.type: addon
+  io.hass.name: "WebBox Dashboard"
+  io.hass.description: "Dashboard + parameter editor for SMA Sunny WebBox / Sunny Island systems"
+  io.hass.version: "0.4.0"
+  io.hass.arch: aarch64,amd64
+args:
+  CLOUDFLARED_VERSION: latest

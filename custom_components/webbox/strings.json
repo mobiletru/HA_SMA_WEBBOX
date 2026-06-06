@@ -1,0 +1,73 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Add a Sunny WebBox",
+                "description": "Enter the host or IP address of your SMA Sunny WebBox. Passwords are optional, but the installer password is required to read and change device parameters.",
+                "data": {
+                    "host": "Host or IP",
+                    "name": "Display name",
+                    "user_password": "User password",
+                    "installer_password": "Installer password"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Could not reach the WebBox. Check the host, the network and (if set) the passwords."
+        },
+        "abort": {
+            "already_configured": "This WebBox is already configured."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "WebBox polling",
+                "data": {
+                    "scan_interval": "Process-data poll interval (seconds)",
+                    "parameter_interval": "Parameter refresh interval (seconds)"
+                }
+            }
+        }
+    },
+    "services": {
+        "set_parameter": {
+            "name": "Set parameter",
+            "description": "Write an arbitrary parameter to a device on the WebBox bus.",
+            "fields": {
+                "device_id": {
+                    "name": "Device",
+                    "description": "The WebBox sub-device (Sunny Island, Sunny Boy, …) to write to."
+                },
+                "device_key": {
+                    "name": "Device key",
+                    "description": "WebBox-internal device key, e.g. SI-44M:1234567890."
+                },
+                "channel": {
+                    "name": "Channel",
+                    "description": "Parameter meta name, e.g. Bat.ChaCapNom."
+                },
+                "value": {
+                    "name": "Value",
+                    "description": "New value to write."
+                }
+            }
+        },
+        "start": {
+            "name": "Start",
+            "description": "Start the inverter / Sunny Island."
+        },
+        "stop": {
+            "name": "Stop",
+            "description": "Stop the inverter / Sunny Island."
+        }
+    },
+    "button": {
+        "start": {
+            "name": "Start"
+        },
+        "stop": {
+            "name": "Stop"
+        }
+    }
+}

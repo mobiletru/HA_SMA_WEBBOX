@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Docker (prevent recursive copies during build)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Development / local-only files (not needed in the image)
+dev.ps1
+*.md
+!README.md
+!DOCS.md
+
+# Caches and test artifacts
+__pycache__
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Temporary and runtime data (use volumes instead)
+*.tmp
+*.temp
+data/
+webboxes.json
+options.json
+
+# If frontend tooling ever gets added
+node_modules/
+npm-debug.log
+yarn-error.log

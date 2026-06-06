@@ -1,0 +1,49 @@
+configuration:
+  log_level:
+    name: Log level
+    description: >-
+      Logging verbosity. Use "debug" or "trace" when you need to see detailed
+      WebBox RPC communication, polling timing, and cache behavior.
+  scan_subnet:
+    name: Default scan subnet
+    description: >-
+      The /24 prefix (e.g. 192.168.1) that will be used as the default when you
+      click the "Scan…" button in the dashboard. Optional.
+  cloudflare_tunnel_token:
+    name: Cloudflare Tunnel token
+    description: >-
+      Paste the long token from Cloudflare Zero Trust → Networks → Tunnels
+      (the part after `--token`). When set, the add-on runs cloudflared as a
+      sidecar so you can reach each WebBox's native UI remotely via a public
+      hostname without opening router ports.
+  webboxes:
+    name: Pre-seeded WebBoxes
+    description: >-
+      Optional list of WebBoxes defined in add-on configuration. These are
+      merged with WebBoxes you add through the dashboard UI. UI-added entries
+      are stored in webboxes.json and take precedence on host conflicts.
+    fields:
+      name:
+        name: Name
+        description: Friendly name shown in the dashboard (e.g. "Roof array").
+      host:
+        name: Host / IP
+        description: IP address or hostname of the Sunny WebBox (no http://).
+      password:
+        name: User password
+        description: WebBox "user" password. Gives read-only access to data.
+      installer_password:
+        name: Installer password
+        description: >-
+          Installer password. Required to read and write device parameters
+          (battery settings, grid limits, operating modes, etc.). Highly
+          recommended.
+      poll_interval:
+        name: Poll interval (s)
+        description: How often live process data should be refreshed for this WebBox.
+      public_url:
+        name: Public URL
+        description: >-
+          Full public HTTPS URL (usually from a Cloudflare Tunnel public
+          hostname) for this WebBox. Used by the "Open WebBox ↗" button.
+          Leave empty if you only access the WebBox locally.

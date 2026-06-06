@@ -1,0 +1,75 @@
+set_parameter:
+  name: Set parameter
+  description: Write an arbitrary parameter to a device on the WebBox bus.
+  fields:
+    device_id:
+      name: Device
+      description: WebBox sub-device (Sunny Island, Sunny Boy, …).
+      required: true
+      selector:
+        device:
+          integration: webbox
+    device_key:
+      name: Device key
+      description: WebBox-internal device key, e.g. SI-44M:1234567890.
+      required: true
+      example: "SI-44M:1234567890"
+      selector:
+        text:
+    channel:
+      name: Channel
+      description: Parameter meta name, e.g. Bat.ChaCapNom.
+      required: true
+      example: "Bat.ChaCapNom"
+      selector:
+        text:
+    value:
+      name: Value
+      description: New value to write.
+      required: true
+      example: "200"
+      selector:
+        text:
+
+start:
+  name: Start
+  description: Start the inverter / Sunny Island (sets Operation.Mode to Start).
+  fields:
+    device_id:
+      name: Device
+      description: The WebBox device (Sunny Island, etc.) to start.
+      required: true
+      selector:
+        device:
+          integration: webbox
+
+stop:
+  name: Stop
+  description: Stop the inverter / Sunny Island (sets Operation.Mode to Stop).
+  fields:
+    device_id:
+      name: Device
+      description: The WebBox device to stop.
+      required: true
+      selector:
+        device:
+          integration: webbox
+
+execute_command:
+  name: Execute command
+  description: Run a named high-level command (start, stop, self_consumption, force_full_charge, etc.). See the integration documentation for the full list of available commands.
+  fields:
+    device_id:
+      name: Device
+      description: The target WebBox device.
+      required: true
+      selector:
+        device:
+          integration: webbox
+    command:
+      name: Command
+      description: Command name, e.g. "start", "stop", "self_consumption", "zero_feed_in", "force_full_charge", "generator_auto_soc".
+      required: true
+      example: "start"
+      selector:
+        text:
