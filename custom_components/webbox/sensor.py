@@ -15,6 +15,8 @@ from .entity import WebBoxBaseEntity, WebBoxHubEntity
 
 # Channel name → state_class hint. Most live readings are measurements;
 # energy totals show up as "*.E.*" or "*Wh*" and become total_increasing.
+# We only assign state_class for numeric values to avoid HA errors on string
+# channels (e.g. device roles like "Master").
 _TOTAL_HINTS = ("Wh", "Total", "Energy")
 
 
@@ -34,8 +36,9 @@ async def async_setup_entry(
 
     # Plant-overview sensors live on the WebBox device itself.
     for key, info in (coordinator.data.get("overview") or {}).items():
+        initial_value = info.get("value")
         entities.append(
-            WebBoxOverviewSensor(coordinator, key, info.get("unit"))
+            WebBoxOverviewSensor(coordinator, key, info.get("unit"), initial_value)
         )
 
     # Per-device process-data sensors.
@@ -44,19 +47,21 @@ async def async_setup_entry(
             name = ch.get("name")
             if not name:
                 continue
+            initial_value = ch.get("value")
             entities.append(
-                WebBoxProcessDataSensor(coordinator, device_key, name, ch.get("unit"))
+                WebBoxProcessDataSensor(coordinator, device_key, name, ch.get("unit"), initial_value)
             )
 
     async_add_entities(entities)
 
 
 class WebBoxOverviewSensor(WebBoxHubEntity, SensorEntity):
-    def __init__(self, coordinator: WebBoxCoordinator, channel: str, unit: str | None) -> None:
+    def __init__(self, coordinator: WebBoxCoordinator, channel: str, unit: str | None, initial_value: Any = None) -> None:
         super().__init__(coordinator, channel)
         self._attr_name = _friendly(channel)
         self._attr_native_unit_of_measurement = unit
-        self._attr_state_class = _state_class_for(channel, unit)
+        if isinstance(initial_value, (int, float)):
+            self._attr_state_class = _state_class_for(channel, unit)
 
     @property
     def native_value(self) -> Any:
@@ -72,10 +77,12 @@ class WebBoxProcessDataSensor(WebBoxBaseEntity, SensorEntity):
         device_key: str,
         channel: str,
         unit: str | None,
+        initial_value: Any = None,
     ) -> None:
         super().__init__(coordinator, device_key, channel, translation_label=_friendly(channel))
         self._attr_native_unit_of_measurement = unit
-        self._attr_state_class = _state_class_for(channel, unit)
+        if isinstance(initial_value, (int, float)):
+            self._attr_state_class = _state_class_for(channel, unit)
 
     @property
     def native_value(self) -> Any:

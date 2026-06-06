@@ -44,6 +44,12 @@ from typing import Any
 
 import httpx
 
+
+def _create_httpx_client(timeout: httpx.Timeout) -> httpx.AsyncClient:
+    """Create httpx client in a thread to avoid blocking event loop on SSL cert load."""
+    return httpx.AsyncClient(timeout=timeout)
+
+
 LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_TIMEOUT = httpx.Timeout(connect=4.0, read=15.0, write=5.0, pool=4.0)
@@ -101,7 +107,10 @@ class WebBoxClient:
 
     async def __aenter__(self) -> "WebBoxClient":
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=self._timeout)
+            loop = asyncio.get_running_loop()
+            self._client = await loop.run_in_executor(
+                None, _create_httpx_client, self._timeout
+            )
             self._owns_client = True
         return self
 
@@ -127,7 +136,10 @@ class WebBoxClient:
         passwd: str | None = None,
     ) -> Any:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=self._timeout)
+            loop = asyncio.get_running_loop()
+            self._client = await loop.run_in_executor(
+                None, _create_httpx_client, self._timeout
+            )
             self._owns_client = True
 
         request: dict[str, Any] = {
@@ -416,7 +428,12 @@ async def scan_subnet(
         "format": "JSON",
     }).encode("utf-8")
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+    # Create client off the event loop to avoid blocking SSL cert load.
+    loop = asyncio.get_running_loop()
+    client = await loop.run_in_executor(
+        None, _create_httpx_client, httpx.Timeout(timeout)
+    )
+    async with client:
         async def probe(ip: str) -> None:
             async with sem:
                 try:
