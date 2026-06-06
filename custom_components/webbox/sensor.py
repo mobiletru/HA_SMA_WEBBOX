@@ -21,9 +21,11 @@ _TOTAL_HINTS = ("Wh", "Total", "Energy")
 
 # Status / mode / relay / operating-state channels that are strings or enums.
 # Never assign state_class=measurement to these (common on Sunny Island clusters).
+# These match common WebBox / Sunny Island process data meta names.
 _STATUS_HINTS = (
     "Stt", "OpStt", "Op_", "Prio", "Rly", "Mode", "Stat", "ConStt",
-    "GdStt", "Backup", "GridCon", "Relay", "OpSttSlv"
+    "GdStt", "Backup", "GridCon", "Relay", "OpSttSlv",
+    "RunStt", "BatStt", "InvStt", "Gd", "DevRole", "Master", "Slave"
 )
 
 
