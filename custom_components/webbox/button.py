@@ -19,24 +19,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import CONF_CUSTOM_COMMANDS, DOMAIN
 from .coordinator import WebBoxCoordinator
 from .entity import WebBoxBaseEntity
-from .parameters import COMMANDS
+from .parameters import get_commands
 from .webbox_client import WebBoxError
-
-# Convert centralized COMMANDS into the tuple format used for button creation.
-# This keeps the source of truth in the catalog.
-COMMAND_DEFINITIONS: list[tuple[str, Any, str, str | None, str]] = [
-    (
-        cmd["channel"],
-        cmd["value"],
-        cmd["label"],
-        cmd.get("icon"),
-        cmd.get("description", ""),
-    )
-    for cmd in COMMANDS
-]
 
 
 async def async_setup_entry(
@@ -47,6 +34,10 @@ async def async_setup_entry(
     coordinator: WebBoxCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[ButtonEntity] = []
 
+    # Merge built-in commands with any custom commands defined in options
+    custom_cmds: list[dict[str, Any]] = entry.options.get(CONF_CUSTOM_COMMANDS, []) or []
+    commands = get_commands(custom_cmds)
+
     for device_key, device in (coordinator.data or {}).get("devices", {}).items():
         params = device.get("parameters") or []
 
@@ -55,7 +46,11 @@ async def async_setup_entry(
             (p.get("key") or p.get("name")): p for p in params if p.get("writable", True)
         }
 
-        for channel, value, label, icon, description in COMMAND_DEFINITIONS:
+        for cmd in commands:
+            channel = cmd.get("channel")
+            value = cmd.get("value")
+            if not channel or value is None:
+                continue
             if channel not in available_channels:
                 continue
 
@@ -75,9 +70,9 @@ async def async_setup_entry(
                     device_key,
                     channel,
                     value,
-                    label=label,
-                    icon=icon,
-                    description=description,
+                    label=cmd.get("label") or channel,
+                    icon=cmd.get("icon"),
+                    description=cmd.get("description", ""),
                 )
             )
 

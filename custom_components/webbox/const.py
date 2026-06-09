@@ -27,3 +27,5 @@ SERVICE_EXECUTE_COMMAND = "execute_command"
 ATTR_DEVICE_KEY = "device_key"
 ATTR_CHANNEL = "channel"
 ATTR_VALUE = "value"
+
+CONF_CUSTOM_COMMANDS = "custom_commands"

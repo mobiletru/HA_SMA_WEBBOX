@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
@@ -15,8 +14,6 @@ from .const import DOMAIN
 from .coordinator import WebBoxCoordinator
 from .entity import WebBoxBaseEntity
 from .webbox_client import WebBoxError
-
-LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(

@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import __version__
-from .parameters import COMMANDS, enrich_parameters, parameter_catalog
+from .parameters import COMMANDS, enrich_parameters, get_commands, parameter_catalog
 from .storage import Storage
 from .webbox_client import (
     WebBoxClient,
@@ -289,8 +289,10 @@ async def sunny_island_catalog() -> list[dict[str, Any]]:
 
 @app.get("/api/commands")
 async def list_commands() -> list[dict[str, Any]]:
-    """Return the curated list of high-level named commands (start, stop, self-consumption, etc.)."""
-    return COMMANDS
+    """Return the list of high-level named commands (built-in + any custom_commands from add-on options)."""
+    options = storage.options()
+    custom = options.get("custom_commands") or []
+    return get_commands(custom)
 
 
 @app.put("/api/webboxes/{webbox_id}/devices/{device_key}/parameters")
@@ -332,9 +334,12 @@ async def webbox_execute_command(
     value = payload.value
 
     if payload.command:
-        cmd = next((c for c in COMMANDS if c["name"] == payload.command), None)
+        options = storage.options()
+        custom = options.get("custom_commands") or []
+        effective_commands = get_commands(custom)
+        cmd = next((c for c in effective_commands if c["name"] == payload.command), None)
         if not cmd:
-            available = ", ".join(c["name"] for c in COMMANDS)
+            available = ", ".join(c["name"] for c in effective_commands)
             raise HTTPException(
                 status_code=400,
                 detail=f"Unknown command {payload.command!r}. Available: {available}",

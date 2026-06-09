@@ -258,6 +258,48 @@ body {
 .device .name { font-weight: 500; }
 .device .key { font-size: 12px; color: var(--text-muted); margin-top: 3px; word-break: break-all; }
 
+/* --- Commands (rebuilt dashboard) --- */
+.command-grid, .command-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    gap: 8px;
+}
+.command-group { margin-bottom: 16px; }
+.command-group-title {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+}
+
+.btn-command {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-start;
+    padding: 9px 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 60ms ease, background var(--transition);
+}
+.btn-command:hover:not(:disabled) {
+    background: var(--surface-3);
+    transform: translateY(-1px);
+}
+.btn-command:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cmd-icon { font-size: 15px; line-height: 1; }
+
+.cmd-quick {
+    padding: 2px 9px;
+    font-size: 12px;
+}
+
 /* --- Tabs --- */
 .tabs { display: flex; gap: 4px; }
 .tab {

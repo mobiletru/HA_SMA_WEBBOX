@@ -7,6 +7,10 @@ The WebBox exposes parameters by their internal "meta" key (e.g.
 dashboard cross-references this catalog to render friendly labels, units,
 sensible min/max bounds, and dropdown choices for enumerations.
 
+MAINTENANCE NOTE:
+    This file is duplicated between custom_components/webbox/parameters/
+    and webbox/app/parameters/. Keep both copies in sync when editing.
+
 This is a curated subset — the most commonly tuned installer parameters,
 grouped the way an SMA installer would expect to see them. Channel names
 follow the conventions documented in the *Sunny Island Parameter List*
@@ -468,6 +472,7 @@ COMMANDS: list[dict[str, Any]] = [
     {"name": "standby", "channel": "Operation.Mode", "value": "Standby", "label": "Standby", "icon": "mdi:pause", "group": "Inverter"},
     {"name": "run", "channel": "Operation.Mode", "value": "Run", "label": "Run", "icon": "mdi:play-circle", "group": "Inverter"},
     # Grid modes
+    {"name": "start_grid", "channel": "Operation.GdOnOff", "value": "OnGrd", "label": "Start Grid", "icon": "mdi:transmission-tower", "group": "Grid"},
     {"name": "on_grid", "channel": "Operation.GdOnOff", "value": "OnGrd", "label": "On-Grid", "icon": "mdi:transmission-tower", "group": "Grid"},
     {"name": "off_grid", "channel": "Operation.GdOnOff", "value": "OffGrd", "label": "Off-Grid", "icon": "mdi:home-lightning-bolt", "group": "Grid"},
     {"name": "backup", "channel": "Operation.GdOnOff", "value": "Bckp", "label": "Backup Mode", "icon": "mdi:battery-charging", "group": "Grid"},
@@ -482,3 +487,21 @@ COMMANDS: list[dict[str, Any]] = [
     # Useful "force" actions (using known parameter writes)
     {"name": "force_full_charge", "channel": "BatChrg.TmFullChrg", "value": 1, "label": "Force Full Charge Cycle", "icon": "mdi:battery-charging-100", "group": "Battery", "description": "Sets full-charge cycle interval to 1 day to trigger soon"},
 ]
+
+
+def get_commands(extra: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Return built-in COMMANDS merged with optional user-defined extra commands.
+
+    Commands are matched by "name". If an extra command has the same name as a
+    built-in one, the extra one wins (user override). Extra commands must have
+    at least "name" and "channel".
+    """
+    if not extra:
+        return list(COMMANDS)
+
+    result: dict[str, dict[str, Any]] = {cmd["name"]: cmd for cmd in COMMANDS}
+    for cmd in extra:
+        name = cmd.get("name")
+        if name and cmd.get("channel"):
+            result[name] = cmd  # override or add
+    return list(result.values())

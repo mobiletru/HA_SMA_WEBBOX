@@ -29,6 +29,13 @@ are exposed for completeness, but :meth:`process_data` and
 :meth:`get_parameters` already accept "all channels" when the
 ``channels`` selection is omitted (section 7.4 / 7.6), saving a round
 trip.
+
+MAINTENANCE NOTE:
+    This file is intentionally duplicated (once under custom_components/
+    for the HACS integration, once under webbox/app/ for the add-on).
+    When making changes here, also update the copy in
+    custom_components/webbox/webbox_client.py (or vice-versa) so the two
+    stay in sync.
 """
 
 from __future__ import annotations

@@ -29,6 +29,12 @@ are exposed for completeness, but :meth:`process_data` and
 :meth:`get_parameters` already accept "all channels" when the
 ``channels`` selection is omitted (section 7.4 / 7.6), saving a round
 trip.
+
+MAINTENANCE NOTE:
+    This file is intentionally duplicated (once under custom_components/
+    for the HACS integration, once under webbox/app/ for the add-on).
+    When making changes here, also update the copy in webbox/app/webbox_client.py
+    (or vice-versa) so the two stay in sync.
 """
 
 from __future__ import annotations
@@ -66,6 +72,14 @@ class WebBoxError(RuntimeError):
 
 def _md5(value: str) -> str:
     return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+
+def normalize_host_url(host: str) -> str:
+    """Return ``host`` as a fully-qualified base URL, defaulting to http://."""
+    host = host.strip().rstrip("/")
+    if not host.startswith(("http://", "https://")):
+        host = f"http://{host}"
+    return host
 
 
 @dataclass(slots=True)
@@ -123,10 +137,7 @@ class WebBoxClient:
 
     @property
     def _endpoint(self) -> str:
-        host = self.host
-        if not host.startswith(("http://", "https://")):
-            host = f"http://{host}"
-        return f"{host.rstrip('/')}/rpc"
+        return f"{normalize_host_url(self.host)}/rpc"
 
     async def _rpc(
         self,
@@ -200,9 +211,28 @@ class WebBoxClient:
         try:
             body = json.loads(raw)
         except ValueError as exc:
-            raise WebBoxError(
-                f"WebBox at {self.host} returned non-JSON body", host=self.host
-            ) from exc
+            # The response wasn't JSON, which usually means we're hitting the
+            # WebBox's HTML admin/login page (RPC not enabled in WebBox
+            # settings, or the device at this IP isn't an SMA WebBox at all).
+            # Surface the content-type and a body snippet so it's diagnosable.
+            content_type = response.headers.get("content-type", "").lower()
+            snippet = " ".join((response.text or "").split())[:200]
+            if "html" in content_type or snippet.lstrip().startswith("<"):
+                detail = (
+                    f"WebBox at {self.host}: POST /rpc returned an HTML page, "
+                    f"not JSON. Most common cause: the WebBox's JSON-RPC "
+                    f"interface is not enabled — open the WebBox web UI → "
+                    f"‘WebBox’ → ‘External communication’ and "
+                    f"enable ‘RPC over HTTP’, then retry. "
+                    f"(content-type={content_type or 'unset'!r}, body[:200]={snippet!r})"
+                )
+            else:
+                detail = (
+                    f"WebBox at {self.host} returned a non-JSON body "
+                    f"(content-type={content_type or 'unset'!r}, "
+                    f"body[:200]={snippet!r})"
+                )
+            raise WebBoxError(detail, host=self.host) from exc
 
         if not isinstance(body, dict):
             raise WebBoxError(f"Unexpected response shape from {self.host}", host=self.host)

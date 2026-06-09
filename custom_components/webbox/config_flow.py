@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+import json
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.core import callback
 
 from .const import (
+    CONF_CUSTOM_COMMANDS,
     CONF_HOST,
     CONF_INSTALLER_PASSWORD,
     CONF_NAME,
@@ -87,9 +90,27 @@ class WebBoxOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            # Parse custom_commands from JSON string if provided
+            data = dict(user_input)
+            if CONF_CUSTOM_COMMANDS in data and isinstance(data[CONF_CUSTOM_COMMANDS], str):
+                raw = data[CONF_CUSTOM_COMMANDS].strip()
+                if raw:
+                    try:
+                        parsed = json.loads(raw)
+                        if isinstance(parsed, list):
+                            data[CONF_CUSTOM_COMMANDS] = parsed
+                        else:
+                            data[CONF_CUSTOM_COMMANDS] = []
+                    except Exception:
+                        data[CONF_CUSTOM_COMMANDS] = []
+                else:
+                    data[CONF_CUSTOM_COMMANDS] = []
+            return self.async_create_entry(title="", data=data)
 
         options = self.entry.options
+        custom_cmds = options.get(CONF_CUSTOM_COMMANDS, [])
+        custom_default = json.dumps(custom_cmds, indent=2) if custom_cmds else "[]"
+
         schema = vol.Schema(
             {
                 vol.Optional(
@@ -100,6 +121,11 @@ class WebBoxOptionsFlow(config_entries.OptionsFlow):
                     CONF_PARAMETER_INTERVAL,
                     default=options.get(CONF_PARAMETER_INTERVAL, DEFAULT_PARAMETER_INTERVAL),
                 ): vol.All(vol.Coerce(int), vol.Range(min=30, max=86400)),
+                vol.Optional(
+                    CONF_CUSTOM_COMMANDS,
+                    default=custom_default,
+                    description={"suggested_value": custom_default},
+                ): str,
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

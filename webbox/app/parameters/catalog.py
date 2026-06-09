@@ -4,6 +4,11 @@ Cross-device parameter catalog.
 Today this only knows the Sunny Island family; if/when Sunny Boy or
 Cluster Controller catalogs are added they should also be merged into
 :data:`LOOKUP` here.
+
+MAINTENANCE NOTE:
+    This file (and sunny_island.py) is duplicated between
+    custom_components/webbox/parameters/ and webbox/app/parameters/.
+    Keep the two directories in sync.
 """
 
 from __future__ import annotations

@@ -21,7 +21,8 @@ from .const import (
     SERVICE_START,
     SERVICE_STOP,
 )
-from .parameters import COMMANDS
+from .const import CONF_CUSTOM_COMMANDS
+from .parameters import get_commands
 from .coordinator import WebBoxCoordinator
 from .webbox_client import WebBoxError
 
@@ -151,22 +152,44 @@ def _register_command_services(hass: HomeAssistant) -> None:
 
 
 async def _execute_named_command(hass: HomeAssistant, call: ServiceCall, command_name: str) -> None:
-    """Execute a named command from the centralized COMMANDS list using only device_id."""
+    """Execute a named command (built-in or custom) using only device_id."""
     device_id: str = call.data["device_id"]
 
-    # Find the command definition
-    cmd = next((c for c in COMMANDS if c["name"] == command_name), None)
-    if not cmd:
-        available = ", ".join(c["name"] for c in COMMANDS)
-        raise HomeAssistantError(f"Unknown command {command_name!r}. Available: {available}")
+    # Collect all commands visible to this device (built-in + per-entry custom)
+    all_commands: list[dict[str, Any]] = []
+    seen: set[str] = set()
 
-    channel = cmd["channel"]
-    value = cmd["value"]
+    # Start with built-in
+    for c in get_commands():
+        if c["name"] not in seen:
+            seen.add(c["name"])
+            all_commands.append(c)
 
     registry = dr.async_get(hass)
     device = registry.async_get(device_id)
     if device is None:
         raise HomeAssistantError(f"Unknown device {device_id!r}")
+
+    # Merge any custom_commands defined in the config entries this device belongs to
+    for entry_id in device.config_entries:
+        coordinator: WebBoxCoordinator | None = hass.data.get(DOMAIN, {}).get(entry_id)
+        if coordinator is None:
+            continue
+        entry = coordinator.entry
+        custom = entry.options.get(CONF_CUSTOM_COMMANDS) or []
+        for c in get_commands(custom):
+            if c["name"] not in seen:
+                seen.add(c["name"])
+                all_commands.append(c)
+
+    # Find the command definition
+    cmd = next((c for c in all_commands if c["name"] == command_name), None)
+    if not cmd:
+        available = ", ".join(c["name"] for c in all_commands)
+        raise HomeAssistantError(f"Unknown command {command_name!r}. Available: {available}")
+
+    channel = cmd["channel"]
+    value = cmd["value"]
 
     for entry_id in device.config_entries:
         coordinator: WebBoxCoordinator | None = hass.data.get(DOMAIN, {}).get(entry_id)

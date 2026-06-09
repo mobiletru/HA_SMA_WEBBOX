@@ -1,12 +1,12 @@
-// WebBox Dashboard — single-page UI.
+// WebBox Dashboard — rebuilt single-page UI (vanilla, zero deps).
+// Goals: cleaner structure, better state management, first-class support for
+// custom commands, improved maintainability and UX.
 //
-// All paths are relative so the same bundle works whether the add-on is
-// reached through Home Assistant Ingress (e.g. /api/hassio_ingress/<token>/)
-// or directly on http://homeassistant.local:8099/.
+// All paths are relative for Ingress or direct serving.
 
 const API_BASE = "api";
 
-// ----- state ---------------------------------------------------------------
+// ----- state (single source of truth) --------------------------------------
 
 const state = {
     webboxes: [],
@@ -21,6 +21,17 @@ const state = {
     healthTimer: null,
     editingId: null,
 };
+
+// Simple reactive update helper — merge partial state and re-render affected parts.
+function setState(partial) {
+    Object.assign(state, partial);
+    // Selective re-renders (cheap enough for this scale)
+    if ("webboxes" in partial || "selectedId" in partial) renderWebBoxList();
+    if ("status" in partial || "selectedId" in partial) renderOverview();
+    if ("devices" in partial || "selectedDeviceKey" in partial) renderDevices();
+    if ("commands" in partial) renderCommands();
+    if ("parameters" in partial || "parameterFilter" in partial) renderParameters();
+}
 
 // ----- DOM helpers ---------------------------------------------------------
 
@@ -220,22 +231,27 @@ function renderQuickCommands() {
     container.replaceChildren();
 
     const wb = currentWebBox();
-    const can = wb && wb.has_installer_password;
-    if (!state.selectedDeviceKey || !can) return;
+    if (!state.selectedDeviceKey || !wb || !wb.has_installer_password) return;
 
-    const important = [
-        { name: "start", label: "Start" },
-        { name: "stop", label: "Stop" }
-    ];
+    // Prefer Start/Stop + the first 2-3 other commands from the loaded list (includes customs)
+    const all = state.commands || [];
+    const preferred = [];
 
-    for (const cmd of important) {
-        const btn = h("button", {
-            class: "btn btn-ghost",
-            style: "padding: 2px 8px; font-size: 12px;",
-            disabled: !can,
-            onclick: () => executeCommand(cmd.name)
-        }, cmd.label);
-        container.append(btn);
+    const byName = (n) => all.find((c) => c.name === n);
+    const start = byName("start") || { name: "start", label: "Start", group: "Inverter" };
+    const stop = byName("stop") || { name: "stop", label: "Stop", group: "Inverter" };
+
+    preferred.push(start, stop);
+
+    // Add a couple more interesting ones (skip duplicates)
+    for (const c of all) {
+        if (["start", "stop"].includes(c.name)) continue;
+        if (preferred.length >= 4) break;
+        preferred.push(c);
+    }
+
+    for (const cmd of preferred) {
+        container.append(makeCommandButton(cmd, true));
     }
 }
 
@@ -367,14 +383,14 @@ function getControlValue(control) {
     return control.value;
 }
 
-// ----- commands (quick actions for the add-on app) -------------------------
+// ----- commands ------------------------------------------------------------
 
-async function executeCommand(cmdName) {
+async function executeCommand(cmdName, triggerBtn = null) {
     const wb = currentWebBox();
     if (!wb || !state.selectedDeviceKey) return;
 
-    const button = event?.currentTarget;
-    if (button) button.disabled = true;
+    const btn = triggerBtn || (typeof event !== "undefined" ? event.currentTarget : null);
+    if (btn) btn.disabled = true;
 
     try {
         await api(`/webboxes/${wb.id}/devices/${encodeURIComponent(state.selectedDeviceKey)}/command`, {
@@ -383,13 +399,39 @@ async function executeCommand(cmdName) {
         });
         toast(`Command "${cmdName}" executed`, "success");
 
-        // Refresh live data and parameters so UI reflects the change quickly
+        // Refresh so the UI reflects any state changes immediately
         await Promise.all([loadDeviceData(), loadParameters()]);
     } catch (err) {
         toast(`Command failed: ${err.message}`, "error");
     } finally {
-        if (button) button.disabled = false;
+        if (btn) btn.disabled = false;
     }
+}
+
+/**
+ * Build a nice command button element.
+ * Used for both the Commands tab grid and the quick header actions.
+ */
+function makeCommandButton(cmd, compact = false) {
+    const wb = currentWebBox();
+    const can = !!(wb && wb.has_installer_password);
+    const label = cmd.label || cmd.name;
+
+    const btn = h("button", {
+        class: compact ? "btn btn-ghost cmd-quick" : "btn btn-command",
+        disabled: !can,
+        title: cmd.description || label,
+        onclick: (e) => executeCommand(cmd.name, e.currentTarget),
+    });
+
+    // Lightweight icon (emoji fallback — no external assets)
+    const iconMap = {
+        Inverter: "⚡", Grid: "🔌", Energy: "☀️", Generator: "🔋", Battery: "🔋", Custom: "★"
+    };
+    const icon = iconMap[cmd.group] || (compact ? "" : "▶");
+    btn.innerHTML = icon ? `<span class="cmd-icon">${icon}</span> ${label}` : label;
+
+    return btn;
 }
 
 function renderCommands() {
@@ -399,7 +441,7 @@ function renderCommands() {
 
     const cmds = state.commands || [];
     const infoEl = $("#command-info");
-    if (infoEl) infoEl.textContent = `${cmds.length} quick command${cmds.length === 1 ? "" : "s"}`;
+    if (infoEl) infoEl.textContent = `${cmds.length} command${cmds.length === 1 ? "" : "s"} (customs included)`;
 
     if (cmds.length === 0) {
         container.append(h("p", { class: "muted" }, "No commands defined."));
@@ -409,7 +451,7 @@ function renderCommands() {
     const wb = currentWebBox();
     const canExecute = !!(wb && wb.has_installer_password);
 
-    // Group commands like parameters (Battery, Inverter, Grid, Energy, Generator, etc.)
+    // Group like the parameter editor
     const groups = new Map();
     for (const cmd of cmds) {
         const g = cmd.group || "Other";
@@ -417,7 +459,7 @@ function renderCommands() {
         groups.get(g).push(cmd);
     }
 
-    const order = ["Inverter", "Grid", "Energy", "Generator", "Battery", "Other"];
+    const order = ["Inverter", "Grid", "Energy", "Generator", "Battery", "Custom", "Other"];
     const sorted = [...groups.entries()].sort(([a], [b]) => {
         const ia = order.indexOf(a); const ib = order.indexOf(b);
         if (ia === -1 && ib === -1) return a.localeCompare(b);
@@ -427,33 +469,14 @@ function renderCommands() {
     });
 
     for (const [group, groupCmds] of sorted) {
-        const groupEl = h("div", { class: "command-group" }, h("h5", { class: "command-group-title" }, group));
+        const groupEl = h("div", { class: "command-group" },
+            h("h5", { class: "command-group-title" }, group)
+        );
 
         const grid = h("div", { class: "command-btn-grid" });
 
         for (const cmd of groupCmds) {
-            const label = cmd.label || cmd.name;
-            const btn = h("button", {
-                class: "btn btn-command",
-                disabled: !canExecute,
-                title: cmd.description || label,
-                onclick: () => executeCommand(cmd.name)
-            });
-
-            // Simple icon using group or first letter as fallback (no external deps)
-            let iconHtml = "";
-            const iconMap = {
-                "Inverter": "⚡",
-                "Grid": "🔌",
-                "Energy": "☀️",
-                "Generator": "🔋",
-                "Battery": "🔋"
-            };
-            const icon = iconMap[group] || "▶";
-            iconHtml = `<span class="cmd-icon">${icon}</span> `;
-
-            btn.innerHTML = `${iconHtml}${label}`;
-            grid.append(btn);
+            grid.append(makeCommandButton(cmd, false));
         }
 
         groupEl.append(grid);
@@ -507,21 +530,21 @@ function currentWebBox() {
 }
 
 function selectWebBox(id) {
-    state.selectedId = id;
-    state.selectedDeviceKey = null;
-    state.status = null;
-    state.devices = [];
-    state.parameters = [];
-    renderWebBoxList();
-    renderOverview();
-    renderDevices();
+    setState({
+        selectedId: id,
+        selectedDeviceKey: null,
+        status: null,
+        devices: [],
+        parameters: [],
+        commands: [],
+    });
     $("#device-detail").classList.add("hidden");
     probeStatus(id);
     schedulePolling();
 }
 
 async function selectDevice(deviceKey) {
-    state.selectedDeviceKey = deviceKey;
+    setState({ selectedDeviceKey: deviceKey });
     renderDevices();
     renderDeviceDetail();
     activateTab("live");
@@ -543,18 +566,15 @@ async function loadParameters() {
     const wb = currentWebBox();
     if (!wb || !state.selectedDeviceKey) return;
     if (!wb.has_installer_password && !wb.has_password) {
-        state.parameters = [];
-        renderParameters();
+        setState({ parameters: [] });
         $("#param-info").textContent = "Add an installer password on this WebBox to load parameters.";
         return;
     }
     try {
         const rows = await api(`/webboxes/${wb.id}/devices/${encodeURIComponent(state.selectedDeviceKey)}/parameters`);
-        state.parameters = rows || [];
-        renderParameters();
+        setState({ parameters: rows || [] });
     } catch (err) {
-        state.parameters = [];
-        renderParameters();
+        setState({ parameters: [] });
         $("#param-info").textContent = `Couldn’t read parameters: ${err.message}`;
     }
 }
@@ -562,19 +582,15 @@ async function loadParameters() {
 async function loadCommands() {
     const wb = currentWebBox();
     if (!wb || !state.selectedDeviceKey) {
-        state.commands = [];
-        renderCommands();
+        setState({ commands: [] });
         return;
     }
-    // Commands are global (from catalog), but we still fetch to stay consistent.
-    // In future we could filter per-device, but for now load all.
+    // Global catalog (now includes any custom_commands from add-on options)
     try {
         const rows = await api(`/commands`);
-        state.commands = rows || [];
-        renderCommands();
+        setState({ commands: rows || [] });
     } catch (err) {
-        state.commands = [];
-        renderCommands();
+        setState({ commands: [] });
         const container = $("#command-grid");
         if (container) container.replaceChildren(h("p", { class: "muted" }, `Couldn’t load commands: ${err.message}`));
     }
@@ -638,6 +654,8 @@ function activateTab(name) {
     }
 }
 
+
+
 // ----- formatting ----------------------------------------------------------
 
 function formatLabel(raw) {
@@ -687,11 +705,30 @@ document.addEventListener("click", (event) => {
     }
 });
 
-// ----- event wiring --------------------------------------------------------
+// Close modals on Escape (better UX)
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        const openModals = $$(".modal:not(.hidden)");
+        if (openModals.length) closeModal(openModals[openModals.length - 1].id);
+    }
+});
+
+// ----- event wiring (improved) ---------------------------------------------
+
+let searchDebounce = null;
 
 function wireEvents() {
+    const search = $("#param-search");
+    if (search) {
+        search.addEventListener("input", (e) => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => {
+                setState({ parameterFilter: e.target.value });
+            }, 120);
+        });
+    }
     $("#add-webbox-btn").addEventListener("click", () => {
-        state.editingId = null;
+        setState({ editingId: null });
         $("#webbox-modal-title").textContent = "Add WebBox";
         const form = $("#webbox-form");
         form.reset();
@@ -703,7 +740,7 @@ function wireEvents() {
     $("#edit-webbox-btn").addEventListener("click", () => {
         const wb = currentWebBox();
         if (!wb) return;
-        state.editingId = wb.id;
+        setState({ editingId: wb.id });
         $("#webbox-modal-title").textContent = "Edit WebBox";
         const form = $("#webbox-form");
         form.reset();
@@ -727,9 +764,8 @@ function wireEvents() {
         try {
             await api(`/webboxes/${wb.id}`, { method: "DELETE" });
             toast("WebBox removed", "success");
-            state.selectedId = null;
+            setState({ selectedId: null });
             await loadWebBoxes();
-            renderOverview();
         } catch (err) {
             toast(`Couldn’t delete: ${err.message}`, "error");
         }
@@ -775,10 +811,8 @@ function wireEvents() {
         await loadWebBoxes();
         // Force the main view to re-render against the fresh data so the
         // "installer password ✓" badge appears immediately, even if the
-        // WebBox isn't reachable yet (probeStatus's catch branch only
-        // repaints the sidebar).
-        if (savedId) state.selectedId = savedId;
-        renderOverview();
+        // WebBox isn't reachable yet.
+        if (savedId) setState({ selectedId: savedId });
     });
 
     $("#scan-btn").addEventListener("click", () => openModal("scan-modal"));
@@ -809,7 +843,7 @@ function wireEvents() {
                                 form.reset();
                                 form.elements.host.value = ip;
                                 form.elements.name.value = `WebBox @ ${ip}`;
-                                state.editingId = null;
+                                setState({ editingId: null });
                                 $("#webbox-modal-title").textContent = "Add WebBox";
                                 closeModal("scan-modal");
                                 openModal("webbox-modal", { reset: false });
@@ -830,10 +864,6 @@ function wireEvents() {
         tab.addEventListener("click", () => activateTab(tab.dataset.tab));
     }
 
-    $("#param-search").addEventListener("input", (event) => {
-        state.parameterFilter = event.target.value;
-        renderParameters();
-    });
 }
 
 async function pollHealth() {
