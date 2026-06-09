@@ -41,9 +41,20 @@ def enrich_parameters(channels: Iterable[dict[str, Any]]) -> list[dict[str, Any]
 
     Each returned entry preserves the firmware-supplied ``value``, ``unit``,
     ``min``/``max`` (when present) and adds catalog-provided ``label``,
-    ``group``, ``description``, ``type``, ``options``, etc. Firmware values
-    win over catalog values when both are present.
+    ``group``, ``description``, ``type``, ``options``, etc.
+
+    For ``options`` (enum values), catalog-provided labeled options are preferred
+    over raw firmware lists (which are often just strings). Raw firmware options
+    are normalized to [{"value": ..., "label": ...}] format if no catalog entry.
     """
+    def _normalize_options(opts: Any) -> list[dict[str, Any]]:
+        if not opts:
+            return []
+        if isinstance(opts, list) and opts and isinstance(opts[0], dict):
+            return opts
+        # raw list of values (str/int/etc.) -> make simple labeled options
+        return [{"value": o, "label": str(o)} for o in opts]
+
     enriched: list[dict[str, Any]] = []
     for ch in channels:
         name = ch.get("name")
@@ -53,11 +64,21 @@ def enrich_parameters(channels: Iterable[dict[str, Any]]) -> list[dict[str, Any]
 
         spec = _LOOKUP.get(name)
         if not spec:
-            enriched.append({**ch, "group": "Other", "label": name, "type": _infer_type(ch.get("value"))})
+            entry = {**ch, "group": "Other", "label": name, "type": _infer_type(ch.get("value"))}
+            if "options" in entry:
+                entry["options"] = _normalize_options(entry.get("options"))
+            enriched.append(entry)
             continue
 
         meta = _spec_to_dict(spec)
-        merged = {**meta, **{k: v for k, v in ch.items() if v is not None}}
+        firmware = {k: v for k, v in ch.items() if v is not None}
+        # Prefer catalog options (they have friendly labels) over firmware raw options
+        if meta.get("options") and "options" in firmware:
+            firmware.pop("options", None)
+        merged = {**meta, **firmware}
+        # If no catalog options but firmware gave us some, normalize them
+        if "options" in merged:
+            merged["options"] = _normalize_options(merged.get("options"))
         merged["key"] = spec.key  # canonical key for writes
         merged["name"] = name      # original key, useful for debugging
         enriched.append(merged)

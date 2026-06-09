@@ -1,7 +1,7 @@
 {
     "domain": "webbox",
     "name": "SMA Sunny WebBox",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "documentation": "https://github.com/mobiletru/ha_addon_webbox",
     "issue_tracker": "https://github.com/mobiletru/ha_addon_webbox/issues",
     "codeowners": ["@mobiletru"],
