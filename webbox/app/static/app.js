@@ -233,25 +233,52 @@ function renderQuickCommands() {
     const wb = currentWebBox();
     if (!state.selectedDeviceKey || !wb || !wb.has_installer_password) return;
 
-    // Prefer Start/Stop + the first 2-3 other commands from the loaded list (includes customs)
     const all = state.commands || [];
-    const preferred = [];
-
     const byName = (n) => all.find((c) => c.name === n);
-    const start = byName("start") || { name: "start", label: "Start", group: "Inverter" };
-    const stop = byName("stop") || { name: "stop", label: "Stop", group: "Inverter" };
 
-    preferred.push(start, stop);
+    // Prominent Start / Stop buttons for the inverter (Operation.Mode)
+    // These are the main "start stop button" controls the user requested.
+    const startCmd = byName("start") || { name: "start", label: "Start", group: "Inverter" };
+    const stopCmd = byName("stop") || { name: "stop", label: "Stop", group: "Inverter" };
 
-    // Add a couple more interesting ones (skip duplicates)
-    for (const c of all) {
-        if (["start", "stop"].includes(c.name)) continue;
-        if (preferred.length >= 4) break;
-        preferred.push(c);
+    // Special prominent Start/Stop buttons (larger, colored)
+    const startBtn = makeCommandButton(startCmd, true);
+    startBtn.classList.add("btn-start");
+    startBtn.style.fontWeight = "600";
+    startBtn.style.minWidth = "70px";
+
+    const stopBtn = makeCommandButton(stopCmd, true);
+    stopBtn.classList.add("btn-stop");
+    stopBtn.style.fontWeight = "600";
+    stopBtn.style.minWidth = "70px";
+
+    container.append(startBtn, stopBtn);
+
+    // Grid Start/Stop as secondary quick actions (using GdManStr or GdOnOff as appropriate)
+    const startGrid = byName("start_grid") || byName("on_grid");
+    const stopGrid = byName("stop_grid") || byName("off_grid");
+
+    if (startGrid) {
+        const btn = makeCommandButton(startGrid, true);
+        btn.style.fontSize = "12px";
+        container.append(btn);
+    }
+    if (stopGrid) {
+        const btn = makeCommandButton(stopGrid, true);
+        btn.style.fontSize = "12px";
+        container.append(btn);
     }
 
-    for (const cmd of preferred) {
-        container.append(makeCommandButton(cmd, true));
+    // Add a few more useful custom/built-in commands (generator, self-consumption, etc.)
+    const forcedNames = new Set(["start", "stop", startGrid?.name, stopGrid?.name].filter(Boolean));
+    let extraCount = 0;
+    for (const c of all) {
+        if (forcedNames.has(c.name)) continue;
+        if (extraCount >= 2) break;
+        const btn = makeCommandButton(c, true);
+        btn.style.fontSize = "12px";
+        container.append(btn);
+        extraCount++;
     }
 }
 
@@ -608,8 +635,13 @@ async function saveParameter(param, control, row) {
             body: JSON.stringify({ channel: param.key || param.name, value }),
         });
         toast(`Updated ${param.label || param.name}`, "success");
-        param.value = value;
         row.classList.remove("dirty");
+
+        // Re-fetch authoritative values from the device.
+        // This ensures the UI shows the actual (possibly normalized) current value
+        // instead of the optimistic one the user typed. Fixes "parameters not changing"
+        // perception when the device rejects, rounds, or delays the update.
+        await loadParameters();
     } catch (err) {
         toast(`Failed to update: ${err.message}`, "error");
     } finally {

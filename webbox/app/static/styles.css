@@ -300,6 +300,39 @@ body {
     font-size: 12px;
 }
 
+/* Quick commands area in device header */
+#quick-commands {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Prominent Start / Stop buttons in the device header quick-commands area */
+#quick-commands .btn-start {
+    background: #22c55e;
+    color: #fff;
+    border-color: #16a34a;
+    padding: 4px 12px;
+    font-size: 13px;
+}
+#quick-commands .btn-start:hover:not(:disabled) {
+    background: #16a34a;
+    transform: translateY(-1px);
+}
+
+#quick-commands .btn-stop {
+    background: #ef4444;
+    color: #fff;
+    border-color: #dc2626;
+    padding: 4px 12px;
+    font-size: 13px;
+}
+#quick-commands .btn-stop:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
 /* --- Tabs --- */
 .tabs { display: flex; gap: 4px; }
 .tab {

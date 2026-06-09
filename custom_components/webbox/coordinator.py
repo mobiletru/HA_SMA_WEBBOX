@@ -148,6 +148,17 @@ class WebBoxCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 host=self.host,
             )
         async with WebBoxClient(self.host, credentials=self._credentials) as client:
-            await client.set_parameter(device_key, channel, value)
-        # Force a parameter refresh on the next poll so entities pick up the new value.
-        self._last_parameter_refresh.pop(device_key, None)
+            # The SetParameter response contains the written channel(s) with their new values.
+            # Use it to update our cache immediately so entities and the UI see the change
+            # without waiting for the next timed refresh.
+            written = await client.set_parameter(device_key, channel, value)
+            enriched = enrich_parameters(written)
+            self._cached_parameters[device_key] = enriched
+            self._last_parameter_refresh[device_key] = self.hass.loop.time()
+
+        # Note: we updated the parameter cache directly with the (flattened) response
+        # from SetParameter. This makes the new value immediately visible to number/select
+        # entities (and anything reading coordinator.data) without waiting for the next
+        # timed poll cycle.
+        # Callers (entities, command services) still usually follow up with
+        # async_request_refresh() to also pull fresh process/live data.

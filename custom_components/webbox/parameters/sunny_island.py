@@ -68,6 +68,12 @@ _GRID_MODES = (
     ("Bckp", "Backup (grid-parallel with backup)"),
 )
 
+_GRID_MANUAL_START = (
+    ("Auto", "Automatic"),
+    ("Stop", "Stop"),
+    ("Start", "Start"),
+)
+
 _SELF_CONSUMPTION_MODES = (
     (0, "Off"),
     (1, "Self-consumption"),
@@ -151,10 +157,10 @@ SUNNY_ISLAND_PARAMETERS: tuple[ParameterSpec, ...] = (
         label="Max charge current",
         group="Charging",
         unit="A",
-        min=0,
-        max=400,
+        min=10,
+        max=1200,
         step=1,
-        description="Maximum DC current that may flow into the battery during charging.",
+        description="Maximum DC current that may flow into the battery during charging. Actual charge current may be lower due to other limits (inverter, generator, grid, temperature, battery type).",
         aliases=("BatCha.ChrgCurMax", "BatChrgCurMax"),
     ),
     ParameterSpec(
@@ -265,6 +271,14 @@ SUNNY_ISLAND_PARAMETERS: tuple[ParameterSpec, ...] = (
         options=_GRID_MODES,
         description="Selects grid-tied, off-grid, or backup operation.",
         aliases=("Operation.Mode",),
+    ),
+    ParameterSpec(
+        key="GdManStr",
+        label="Manual grid start",
+        group="Grid",
+        type="enum",
+        options=_GRID_MANUAL_START,
+        description="Manual control to request grid connection (Start), disconnect (Stop), or let automatic (Auto).",
     ),
     ParameterSpec(
         key="Operation.Mode",
@@ -471,8 +485,9 @@ COMMANDS: list[dict[str, Any]] = [
     {"name": "stop", "channel": "Operation.Mode", "value": "Stop", "label": "Stop", "icon": "mdi:stop", "group": "Inverter"},
     {"name": "standby", "channel": "Operation.Mode", "value": "Standby", "label": "Standby", "icon": "mdi:pause", "group": "Inverter"},
     {"name": "run", "channel": "Operation.Mode", "value": "Run", "label": "Run", "icon": "mdi:play-circle", "group": "Inverter"},
-    # Grid modes
-    {"name": "start_grid", "channel": "Operation.GdOnOff", "value": "OnGrd", "label": "Start Grid", "icon": "mdi:transmission-tower", "group": "Grid"},
+    # Grid modes (using manual grid start for direct Start/Stop Grid buttons)
+    {"name": "start_grid", "channel": "GdManStr", "value": "Start", "label": "Start Grid", "icon": "mdi:transmission-tower", "group": "Grid"},
+    {"name": "stop_grid", "channel": "GdManStr", "value": "Stop", "label": "Stop Grid", "icon": "mdi:transmission-tower-off", "group": "Grid"},
     {"name": "on_grid", "channel": "Operation.GdOnOff", "value": "OnGrd", "label": "On-Grid", "icon": "mdi:transmission-tower", "group": "Grid"},
     {"name": "off_grid", "channel": "Operation.GdOnOff", "value": "OffGrd", "label": "Off-Grid", "icon": "mdi:home-lightning-bolt", "group": "Grid"},
     {"name": "backup", "channel": "Operation.GdOnOff", "value": "Bckp", "label": "Backup Mode", "icon": "mdi:battery-charging", "group": "Grid"},
