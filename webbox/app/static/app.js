@@ -516,6 +516,214 @@ function renderCommands() {
     }
 }
 
+// ----- Modbus (direct TCP to the WebBox gateway) ----------------------------
+
+let modbusProfiles = [];
+
+// Modbus writes must carry the installer password (the server verifies it
+// against the stored one). Ask once per WebBox and keep it in memory only.
+const modbusWriteAuth = new Map();
+
+function modbusInstallerPassword(wb) {
+    if (modbusWriteAuth.has(wb.id)) return modbusWriteAuth.get(wb.id);
+    const pw = window.prompt("Enter the installer password to confirm Modbus writes:");
+    if (pw) modbusWriteAuth.set(wb.id, pw);
+    return pw;
+}
+
+async function loadModbusProfiles() {
+    const select = $("#modbus-profile");
+    if (!select) return;
+    try {
+        modbusProfiles = await api("/modbus/profiles");
+    } catch {
+        modbusProfiles = [];
+    }
+    select.replaceChildren();
+    if (modbusProfiles.length === 0) {
+        select.append(h("option", { value: "" }, "No profiles bundled"));
+        select.disabled = true;
+        return;
+    }
+    for (const p of modbusProfiles) {
+        select.append(h("option", { value: p.name },
+            `${p.device_name} (${p.name}, ${p.channel_count} ch)`));
+    }
+}
+
+function syncModbusControls() {
+    const wb = currentWebBox();
+    if (!wb) return;
+    const unit = $("#modbus-unit");
+    const select = $("#modbus-profile");
+    if (unit) unit.value = wb.modbus_unit_id || 3;
+    if (select && wb.modbus_profile) select.value = wb.modbus_profile;
+    // Clear stale results from a previously selected WebBox
+    $("#modbus-discover-results")?.replaceChildren();
+    $("#modbus-live")?.replaceChildren();
+    $("#modbus-params")?.replaceChildren();
+}
+
+async function modbusDiscover() {
+    const wb = currentWebBox();
+    if (!wb) return;
+    const btn = $("#modbus-discover-btn");
+    const out = $("#modbus-discover-results");
+    btn.disabled = true;
+    out.replaceChildren(h("span", {}, "Reading gateway device table…"));
+    try {
+        const data = await api(`/webboxes/${wb.id}/modbus/discover`, { method: "POST" });
+        out.replaceChildren();
+        if (!data.devices.length) {
+            out.append(h("span", {}, "Gateway reachable, but no devices in its unit-ID table."));
+        } else {
+            for (const dev of data.devices) {
+                out.append(h("span", {
+                    class: "badge-pill",
+                    style: "margin-right: 6px; cursor: pointer;",
+                    title: `Device-ID ${dev.device_id} — click to use this unit ID`,
+                    onclick: () => {
+                        if (dev.addressable) {
+                            $("#modbus-unit").value = dev.unit_id;
+                            modbusRead();
+                        }
+                    },
+                }, `serial ${dev.serial} → unit ${dev.addressable ? dev.unit_id : "255 (unassigned)"}`));
+            }
+        }
+    } catch (err) {
+        out.replaceChildren(h("span", { style: "color: var(--danger)" }, `Discover failed: ${err.message}`));
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function modbusRead() {
+    const wb = currentWebBox();
+    if (!wb) return;
+    const btn = $("#modbus-read-btn");
+    const live = $("#modbus-live");
+    btn.disabled = true;
+    live.replaceChildren(h("p", { class: "muted" }, "Reading registers…"));
+    $("#modbus-params").replaceChildren();
+    try {
+        const unit = Number($("#modbus-unit").value) || 3;
+        const profile = $("#modbus-profile").value;
+        const qs = `?unit_id=${unit}${profile ? `&profile=${encodeURIComponent(profile)}` : ""}`;
+        const data = await api(`/webboxes/${wb.id}/modbus/channels${qs}`);
+        renderModbusChannels(data);
+    } catch (err) {
+        live.replaceChildren(h("p", { class: "muted", style: "color: var(--danger)" },
+            `Modbus read failed: ${err.message}`));
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderModbusChannels(data) {
+    const live = $("#modbus-live");
+    const paramsEl = $("#modbus-params");
+    live.replaceChildren();
+    paramsEl.replaceChildren();
+
+    const channels = data.channels || [];
+    const measurements = channels.filter((c) => !c.writable);
+    const settings = channels.filter((c) => c.writable);
+
+    for (const ch of measurements) {
+        if (ch.value == null) continue; // NaN / not supported by this device
+        live.append(h("div", { class: "data-row" },
+            h("div", { class: "name", title: `register ${ch.address}` }, formatLabel(ch.name)),
+            h("div", { class: "value" },
+                ch.type === "enum" ? (ch.label ?? String(ch.value)) : formatValue(ch.value),
+                ch.unit ? h("span", { class: "unit" }, ch.unit) : null
+            )
+        ));
+    }
+    if (!live.children.length) {
+        live.append(h("p", { class: "muted" }, "No measurement values (device offline or wrong unit ID?)."));
+    }
+
+    if (settings.length) {
+        const wb = currentWebBox();
+        const canWrite = !!(wb && wb.has_installer_password);
+        const groupEl = h("div", { class: "parameter-group" },
+            h("h4", {}, `Writable parameters${canWrite ? "" : " — add the installer password to enable writes"}`));
+        for (const ch of settings) {
+            groupEl.append(modbusParameterRow(ch, canWrite));
+        }
+        paramsEl.append(groupEl);
+    }
+}
+
+function modbusParameterRow(ch, canWrite) {
+    let control;
+    if (ch.type === "enum" && Array.isArray(ch.options) && ch.options.length) {
+        control = h("select", {});
+        for (const opt of ch.options) {
+            const optEl = h("option", { value: String(opt.value) }, opt.label);
+            if (ch.value != null && String(opt.value) === String(ch.value)) optEl.selected = true;
+            control.append(optEl);
+        }
+    } else {
+        control = h("input", { type: "number", value: ch.value ?? "", step: "any" });
+    }
+    control.disabled = !canWrite;
+
+    const saveBtn = h("button", {
+        class: "btn btn-primary save-btn",
+        disabled: !canWrite,
+        onclick: async () => {
+            const raw = control.tagName === "SELECT" ? Number(control.value) : Number(control.value);
+            if (Number.isNaN(raw)) { toast("Enter a value first", "error"); return; }
+            const wb = currentWebBox();
+            const installerPassword = modbusInstallerPassword(wb);
+            if (!installerPassword) { toast("Write cancelled — installer password required", "error"); return; }
+            saveBtn.disabled = true;
+            try {
+                await api(`/webboxes/${wb.id}/modbus/channels`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        // write by register address: channel names can be
+                        // duplicated in SMA profiles (e.g. BatChrgCurMax
+                        // exists at 40045 and 40081)
+                        channel: String(ch.address),
+                        value: raw,
+                        unit_id: Number($("#modbus-unit").value) || undefined,
+                        profile: $("#modbus-profile").value || undefined,
+                        installer_password: installerPassword,
+                    }),
+                });
+                toast(`Wrote ${ch.name} (register ${ch.address})`, "success");
+                row.classList.remove("dirty");
+            } catch (err) {
+                modbusWriteAuth.delete(wb.id); // may have been wrong — re-prompt next time
+                toast(`Write failed: ${err.message}`, "error");
+            } finally {
+                saveBtn.disabled = !canWrite;
+            }
+        },
+    }, "Write");
+
+    const row = h("div", { class: "parameter-row" },
+        h("div", { class: "meta" },
+            h("div", { class: "label-row" },
+                h("span", { class: "label" }, formatLabel(ch.name)),
+                h("span", { class: "key" }, `${ch.name} @ ${ch.address}`),
+                h("span", { class: "badges" },
+                    ch.unit ? h("span", { class: "badge-pill" }, ch.unit) : null,
+                    ch.type === "enum" && ch.label ? h("span", { class: "badge-pill" }, `now: ${ch.label}`) : null
+                )
+            )
+        ),
+        h("div", { class: "control" }, control, saveBtn)
+    );
+    control.addEventListener("input", () => {
+        row.classList.toggle("dirty", String(control.value) !== String(ch.value ?? ""));
+    });
+    return row;
+}
+
 // ----- actions -------------------------------------------------------------
 
 async function loadWebBoxes() {
@@ -566,6 +774,7 @@ function selectWebBox(id) {
         commands: [],
     });
     $("#device-detail").classList.add("hidden");
+    syncModbusControls();
     probeStatus(id);
     schedulePolling();
 }
@@ -780,6 +989,8 @@ function wireEvents() {
         form.elements.host.value = wb.host || "";
         form.elements.public_url.value = wb.public_url || "";
         form.elements.poll_interval.value = wb.poll_interval || 30;
+        form.elements.modbus_port.value = wb.modbus_port || 502;
+        form.elements.modbus_unit_id.value = wb.modbus_unit_id || 3;
         // Stored passwords are intentionally not sent back to the browser.
         // Surface that with a placeholder so users know blank = keep current.
         form.elements.password.placeholder =
@@ -823,6 +1034,8 @@ function wireEvents() {
         event.preventDefault();
         const data = Object.fromEntries(new FormData(event.target).entries());
         if (data.poll_interval) data.poll_interval = Number(data.poll_interval);
+        if (data.modbus_port) data.modbus_port = Number(data.modbus_port);
+        if (data.modbus_unit_id) data.modbus_unit_id = Number(data.modbus_unit_id);
         let savedId = state.editingId;
         // Don't send blank passwords on edit — they'd wipe stored secrets.
         if (state.editingId) {
@@ -896,6 +1109,8 @@ function wireEvents() {
         tab.addEventListener("click", () => activateTab(tab.dataset.tab));
     }
 
+    $("#modbus-discover-btn")?.addEventListener("click", modbusDiscover);
+    $("#modbus-read-btn")?.addEventListener("click", modbusRead);
 }
 
 async function pollHealth() {
@@ -914,7 +1129,7 @@ async function main() {
     await pollHealth();
     if (state.healthTimer) clearInterval(state.healthTimer);
     state.healthTimer = setInterval(pollHealth, 30000);
-    await loadWebBoxes();
+    await Promise.all([loadWebBoxes(), loadModbusProfiles()]);
 }
 
 main().catch((err) => {

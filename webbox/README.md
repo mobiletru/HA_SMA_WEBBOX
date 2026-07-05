@@ -25,14 +25,28 @@ or more **SMA Sunny WebBox** data loggers.
   reachable from anywhere via its public Cloudflare hostname; no LAN
   access required.
 
-## Installation
+## Installation (local add-on)
 
-1. In Home Assistant, open **Settings → Add-ons → Add-on Store**.
-2. From the three-dot menu choose **Repositories**, add the URL of this
-   repository, click **Add**, then close.
-3. Find **WebBox Dashboard** in the store and click **Install**.
-4. Optionally pre-seed some WebBoxes from the **Configuration** tab
+This add-on is installed as a **local add-on** — no add-on repository
+needed. The Supervisor builds the Docker image directly on your HA host.
+
+1. Enable access to the HA `/addons` folder, e.g. install the
+   **Samba share** add-on (or use the **SSH & Web Terminal** add-on /
+   `scp`).
+2. Copy this entire `webbox` folder to `/addons/webbox` on the HA host,
+   so that `/addons/webbox/config.yaml` exists. Do **not** copy the
+   repository root — only the `webbox` folder itself.
+3. In Home Assistant open **Settings → Add-ons → Add-on Store**, click
+   the three-dot menu → **Check for updates** (or reload the page).
+4. A new **Local add-ons** section appears at the top with
+   **WebBox Dashboard**. Click it → **Install**. The first install
+   builds the image locally and can take a few minutes.
+5. Optionally pre-seed some WebBoxes from the **Configuration** tab
    (see below), then **Start** the add-on and **Open Web UI**.
+
+To ship an update later: copy the changed files again, bump `version:`
+in `config.yaml` (otherwise use the add-on's **Rebuild** button), and
+the update will be offered in the add-on page.
 
 ## Configuration
 

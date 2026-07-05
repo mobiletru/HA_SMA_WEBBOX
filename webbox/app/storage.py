@@ -81,6 +81,9 @@ class Storage:
                 "installer_password": entry.get("installer_password") or "",
                 "poll_interval": entry.get("poll_interval") or 30,
                 "public_url": (entry.get("public_url") or "").strip(),
+                "modbus_port": entry.get("modbus_port") or 502,
+                "modbus_unit_id": entry.get("modbus_unit_id") or 3,
+                "modbus_profile": entry.get("modbus_profile") or "SI6048MBP",
                 "source": "options",
             }
         for entry in user:
@@ -95,6 +98,9 @@ class Storage:
                 "installer_password": entry.get("installer_password") or "",
                 "poll_interval": entry.get("poll_interval") or 30,
                 "public_url": (entry.get("public_url") or "").strip(),
+                "modbus_port": entry.get("modbus_port") or 502,
+                "modbus_unit_id": entry.get("modbus_unit_id") or 3,
+                "modbus_profile": entry.get("modbus_profile") or "SI6048MBP",
                 "source": "user",
             }
         return list(merged.values())
@@ -114,6 +120,9 @@ class Storage:
                 "installer_password": payload.get("installer_password") or "",
                 "poll_interval": int(payload.get("poll_interval") or 30),
                 "public_url": (payload.get("public_url") or "").strip(),
+                "modbus_port": int(payload.get("modbus_port") or 502),
+                "modbus_unit_id": int(payload.get("modbus_unit_id") or 3),
+                "modbus_profile": payload.get("modbus_profile") or "SI6048MBP",
             }
             items = [i for i in items if i.get("id") != new_id and i.get("host") != host]
             items.append(entry)
@@ -126,11 +135,12 @@ class Storage:
             found = next((i for i in items if i.get("id") == webbox_id), None)
             if not found:
                 raise KeyError(webbox_id)
-            for key in ("name", "host", "password", "installer_password", "public_url"):
+            for key in ("name", "host", "password", "installer_password", "public_url", "modbus_profile"):
                 if key in payload and payload[key] is not None:
                     found[key] = payload[key]
-            if "poll_interval" in payload and payload["poll_interval"] is not None:
-                found["poll_interval"] = int(payload["poll_interval"])
+            for key in ("poll_interval", "modbus_port", "modbus_unit_id"):
+                if key in payload and payload[key] is not None:
+                    found[key] = int(payload[key])
             self._save_state(items)
         return {**found, "source": "user"}
 

@@ -14,6 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import __version__
+from .modbus import (
+    ModbusError,
+    available_profiles,
+    discover_units,
+    read_channels,
+    write_channel,
+)
 from .parameters import COMMANDS, enrich_parameters, get_commands, parameter_catalog
 from .storage import Storage
 from .webbox_client import (
@@ -99,6 +106,11 @@ class WebBoxIn(BaseModel):
     # (e.g. "https://webbox.example.com"). Empty when not configured;
     # the "Open WebBox" button is disabled until this is set.
     public_url: str | None = None
+    # Modbus TCP settings (WebBox gateway). unit_id 3 is the first device
+    # assigned by the WebBox's plant detection.
+    modbus_port: int | None = Field(default=502, ge=1, le=65535)
+    modbus_unit_id: int | None = Field(default=3, ge=1, le=255)
+    modbus_profile: str | None = "SI6048MBP"
 
 
 class WebBoxPatch(BaseModel):
@@ -108,6 +120,9 @@ class WebBoxPatch(BaseModel):
     installer_password: str | None = None
     poll_interval: int | None = Field(default=None, ge=5, le=3600)
     public_url: str | None = None
+    modbus_port: int | None = Field(default=None, ge=1, le=65535)
+    modbus_unit_id: int | None = Field(default=None, ge=1, le=255)
+    modbus_profile: str | None = None
 
 
 class ParameterUpdate(BaseModel):
@@ -123,6 +138,16 @@ class CommandRequest(BaseModel):
     command: str | None = None
     channel: str | None = None
     value: Any | None = None
+
+
+class ModbusWriteRequest(BaseModel):
+    channel: str
+    value: Any
+    unit_id: int | None = Field(default=None, ge=1, le=255)
+    profile: str | None = None
+    # must match the stored installer password; Modbus itself is
+    # unauthenticated, so the RPC path's password check is replicated here
+    installer_password: str | None = None
 
 
 # ----- helpers ------------------------------------------------------------
@@ -356,6 +381,113 @@ async def webbox_execute_command(
         except WebBoxError as exc:
             raise HTTPException(status_code=502, detail=str(exc))
     return {"status": "ok", "command": payload.command, "channel": channel, "value": value, "result": result}
+
+
+# ----- Modbus TCP (WebBox gateway) -----------------------------------------
+
+
+def _modbus_target(
+    wb: dict[str, Any], unit_id: int | None = None, profile: str | None = None
+) -> tuple[str, int, int, str]:
+    """Resolve (host, port, unit_id, profile) for a WebBox's Modbus gateway.
+
+    The stored host may be an ``http://…`` URL for the RPC API; Modbus
+    needs the bare hostname/IP.
+    """
+    host = wb["host"].strip()
+    for prefix in ("http://", "https://"):
+        if host.startswith(prefix):
+            host = host[len(prefix):]
+    host = host.split("/", 1)[0]        # drop any path
+    # drop any HTTP port — Modbus has its own. Bracketed IPv6 literals
+    # ([fe80::1]:80) keep their colons; a bare IPv6 (multiple colons,
+    # no brackets) has no port to strip.
+    if host.startswith("["):
+        host = host[1:].split("]", 1)[0]
+    elif host.count(":") == 1:
+        host = host.split(":", 1)[0]
+    return (
+        host,
+        int(wb.get("modbus_port") or 502),
+        int(unit_id if unit_id is not None else (wb.get("modbus_unit_id") or 3)),
+        profile or wb.get("modbus_profile") or "SI6048MBP",
+    )
+
+
+@app.get("/api/modbus/profiles")
+async def modbus_profiles() -> list[dict[str, Any]]:
+    """List the SMA Modbus profiles bundled with the add-on."""
+    return available_profiles()
+
+
+@app.post("/api/webboxes/{webbox_id}/modbus/discover")
+async def modbus_discover(webbox_id: str) -> dict[str, Any]:
+    """Read the gateway's device ↔ unit-ID table (unit ID 1)."""
+    wb = _require(webbox_id)
+    host, port, _unit, _profile = _modbus_target(wb)
+    try:
+        devices = await discover_units(host, port)
+    except ModbusError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    return {"host": host, "port": port, "devices": devices}
+
+
+@app.get("/api/webboxes/{webbox_id}/modbus/channels")
+async def modbus_read(
+    webbox_id: str,
+    unit_id: int | None = None,
+    profile: str | None = None,
+    channels: str | None = None,
+) -> dict[str, Any]:
+    """Read profile channels over Modbus TCP.
+
+    ``channels`` is an optional comma-separated list of channel names or
+    register addresses; omitted = the whole profile in block reads.
+    """
+    wb = _require(webbox_id)
+    host, port, unit, prof = _modbus_target(wb, unit_id, profile)
+    selection = [c.strip() for c in channels.split(",") if c.strip()] if channels else None
+    try:
+        return await read_channels(host, unit, prof, port=port, channels=selection)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc.args[0]))
+    except ModbusError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.put("/api/webboxes/{webbox_id}/modbus/channels")
+async def modbus_write(webbox_id: str, payload: ModbusWriteRequest) -> dict[str, Any]:
+    """Write one writable profile channel over Modbus TCP.
+
+    Modbus itself is unauthenticated. On the RPC path the WebBox verifies
+    the installer password itself; to keep the same bar here, the request
+    must carry the installer password and it must match the stored one.
+    """
+    wb = _require(webbox_id)
+    stored = wb.get("installer_password")
+    if not stored:
+        raise HTTPException(
+            status_code=400,
+            detail="Installer password is required to write parameters via Modbus.",
+        )
+    if payload.installer_password != stored:
+        raise HTTPException(
+            status_code=403,
+            detail="Wrong installer password.",
+        )
+    host, port, unit, prof = _modbus_target(wb, payload.unit_id, payload.profile)
+    try:
+        return await write_channel(host, unit, prof, payload.channel, payload.value, port=port)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc.args[0]))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except ModbusError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 # ----- network scan -------------------------------------------------------

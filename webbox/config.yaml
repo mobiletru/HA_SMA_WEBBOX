@@ -1,5 +1,5 @@
 name: WebBox Dashboard
-version: "0.4.0"
+version: "0.5.2"
 slug: webbox
 description: Modern dashboard for SMA Sunny WebBox data loggers — discover, monitor, and tune every WebBox on your network.
 url: https://github.com/mobiletru/ha_addon_webbox
@@ -40,3 +40,9 @@ schema:
       installer_password: password?
       poll_interval: int(5,3600)?
       public_url: url?
+      modbus_port: int(1,65535)?
+      modbus_unit_id: int(1,255)?
+      modbus_profile: str?
+      modbus_port: int(1,65535)?
+      modbus_unit_id: int(1,255)?
+      modbus_profile: str?

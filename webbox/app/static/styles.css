@@ -434,7 +434,7 @@ body {
 .parameter-row.dirty .save-btn { visibility: visible; }
 
 .parameter-row .badges { display: flex; gap: 4px; flex-wrap: wrap; }
-.parameter-row .badge-pill {
+.badge-pill {
     background: var(--surface-3);
     border: 1px solid var(--border);
     border-radius: 999px;
@@ -442,6 +442,31 @@ body {
     font-size: 10px;
     color: var(--text-muted);
 }
+
+/* ----- Modbus panel ------------------------------------------------------ */
+
+.modbus-toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.modbus-toolbar select,
+.modbus-toolbar input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 12px;
+}
+.inline-field {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+}
+#modbus-discover-results { margin-bottom: 10px; }
+#modbus-params { margin-top: 12px; }
+
+.field-row { display: flex; gap: 12px; }
+.field-row label { flex: 1; }
 
 /* --- Buttons --- */
 .btn {

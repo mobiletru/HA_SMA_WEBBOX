@@ -32,6 +32,9 @@ Each entry in `webboxes`:
 - `installer_password`: Required for reading/writing parameters (highly recommended).
 - `poll_interval`: How often to refresh live data (seconds).
 - `public_url`: Full HTTPS URL (via Cloudflare Tunnel or other reverse proxy) for the **Open WebBox ↗** button.
+- `modbus_port`: Port of the WebBox's Modbus TCP server (default `502`).
+- `modbus_unit_id`: Modbus unit ID of the device (default `3`; the WebBox assigns 3+ to detected devices).
+- `modbus_profile`: Bundled SMA Modbus profile to use (default `SI6048MBP`, Sunny Island 6048).
 
 Example:
 
@@ -93,6 +96,26 @@ or raw:
 ```
 
 Requires the installer password for the WebBox. The list of named commands is maintained in `app/parameters/sunny_island.py` (COMMANDS).
+
+## Modbus TCP (direct register access)
+
+Besides the JSON-RPC API, the WebBox (with Modbus firmware) exposes every detected SMA device over **Modbus TCP** on port 502. The dashboard's **Modbus** panel talks to it directly using the official SMA register profile — useful when RPC parameter access is limited, and it is what the Start/Stop and generator controls on a Sunny Island map to at register level (e.g. `ManStr` @ 40009, `GnManStr` @ 40055).
+
+Setup:
+
+1. In the WebBox web UI, enable the Modbus server (**WebBox → External communication → Modbus**) and note the port (default 502).
+2. In the dashboard, select the WebBox and click **Discover units** in the Modbus panel — this reads the gateway's device table (unit ID 1) and shows each device's serial and unit ID.
+3. Click a discovered unit (or type its ID) and press **Read** to load all profile registers: live measurements (SOC, battery voltage/current, power, generator/grid status, …) and writable parameters (charge currents/voltages, generator limits, manual start/stop, …).
+4. Writes require the installer password to be stored for that WebBox (same safety bar as the RPC path — Modbus itself has no authentication).
+
+Profiles live in `app/modbus/profiles/` (currently `SI6048MBP.xml` for the Sunny Island 6048 family, SusyID 69). Drop additional SMA profile XMLs there to support other device families.
+
+### Modbus REST API
+
+- `GET /api/modbus/profiles` — bundled profiles.
+- `POST /api/webboxes/{id}/modbus/discover` — read the gateway's unit-ID table.
+- `GET /api/webboxes/{id}/modbus/channels?unit_id=3&profile=SI6048MBP&channels=BatSoc,BatVtg` — read registers (omit `channels` for the full profile).
+- `PUT /api/webboxes/{id}/modbus/channels` with `{ "channel": "GnManStr", "value": "Start" }` — write a register. Enum channels accept the tag code (`1467`) or its label (`"Start"`); numeric channels accept plain numbers in display units (the FIXn scaling is applied automatically).
 
 ## Related
 

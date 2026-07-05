@@ -47,3 +47,20 @@ configuration:
           Full public HTTPS URL (usually from a Cloudflare Tunnel public
           hostname) for this WebBox. Used by the "Open WebBox ↗" button.
           Leave empty if you only access the WebBox locally.
+      modbus_port:
+        name: Modbus TCP port
+        description: >-
+          Port of the WebBox's Modbus server (enable it in the WebBox web UI
+          under External communication → Modbus). Default 502.
+      modbus_unit_id:
+        name: Modbus unit ID
+        description: >-
+          Unit ID of the device to read, as assigned by the WebBox's plant
+          detection (3 = first device). Use "Discover units" in the dashboard
+          to list the assignments.
+      modbus_profile:
+        name: Modbus profile
+        description: >-
+          Name of the bundled SMA Modbus profile XML that describes the
+          device's registers. Bundled: SI6048MBP (Sunny Island 6048,
+          default) and SI5048MBP (Sunny Island 5048).

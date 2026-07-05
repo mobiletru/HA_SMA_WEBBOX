@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unitid_configuration>
+  <category name="Inverter" unitid_min="3" unitid_max="3">
+    <rule name="Sunny Central Grizzly - Geraetefamilie" />
+    <rule name="Sunny Central Mammut - 250U, 500U" />
+    <rule name="Sunny Central Mammut - 500HEUS" />
+    <rule name="Sunny Central Control - Geraetefamilie" />
+    <rule name="Sunny Central Classic - Geraetefamilie" />
+    <rule name="Sunny Central 100" />
+  </category>
+  <category name="VirtualModbusDevices.Sma" unitid_min="90" unitid_max="90" />
+  <category name="CanDevices.Sma" unitid_min="91" unitid_max="91" />
+  <category name="ModbusMasterDevices.Sma" unitid_min="95" unitid_max="95" />
+  <category name="VirtualModbusDevices" unitid_min="100" unitid_max="100" />
+  <category name="CanDevices" unitid_min="101" unitid_max="101" />
+  <category name="ModbusMasterDevices" unitid_min="105" unitid_max="105" />
+  <category name="SCSMC SMID" unitid_min="110" unitid_max="110">
+    <rule name="Sunny Central String Monitoring Control" />
+    <rule name="SMID_CONT" />
+  </category>
+  <category name="Sensorbox Wetterbox" unitid_min="120" unitid_max="120">
+    <rule name="SENSOR-BOX" />
+    <rule name="SMA Meteo Station" />
+  </category>
+  <category name="SMU" unitid_min="140" unitid_max="189">
+    <rule name="Sunny String Monitoring US" />
+    <rule name="String Monitoring Unit" />
+  </category>
+</unitid_configuration>

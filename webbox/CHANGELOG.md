@@ -1,5 +1,74 @@
 # Changelog
 
+## 0.5.2
+
+**Code-review fixes for the Modbus feature:**
+
+- Security: Modbus profile ids from the API are validated (no path
+  separators / `..`), so they can no longer reference XML files outside
+  the profile directories.
+- Security: Modbus writes now require the installer password in the
+  request and verify it against the stored one (the dashboard prompts
+  once per WebBox); previously it only had to be *stored*.
+- Values are no longer divided by the profile's `scale` attribute — it
+  is a WebBox-UI display hint, and applying it produced values that
+  contradicted the reported unit (e.g. `OnTmh` showed hours labeled "s",
+  energy counters showed kWh labeled "Wh"). Raw-unit values are now
+  reported as-is.
+- `unitid_config.xml` (or any non-profile XML) placed in
+  `WEBBOX_MODBUS_PROFILE_DIR` no longer shows up as a bogus profile.
+- Dashboard writes address registers by number instead of by name, so
+  duplicated channel names in SMA profiles (`BatChrgCurMax` at 40045
+  and 40081) can't write to the wrong register.
+- Malformed Modbus frames (MBAP length < 2) now raise a clean
+  `ModbusError` instead of an unhandled exception.
+- Bare IPv6 hosts are no longer mangled when deriving the Modbus host
+  from the stored WebBox URL.
+
+## 0.5.1
+
+**Modbus fixes from testing against real WebBox hardware:**
+
+- Discovery no longer fails on a WebBox whose unit-ID assignment table
+  is empty (real firmware answers *Illegal data address* instead of
+  empty slots); it now returns an empty device list.
+- `TEMP`-format registers (e.g. `BatTmp`) are now scaled with their one
+  implied decimal place (raw 253 → 25.3 °C).
+- Enum (`TAGLIST`) writes are guarded: values must be a tag ID or label
+  from the channel's allowed mapping (e.g. `ManStr` accepts only
+  "Activated"/"Stop"), so arbitrary values can't be written to enum
+  registers of a live device.
+
+## 0.5.0
+
+**Modbus TCP support** — the dashboard can now talk to the WebBox's
+Modbus server directly (enable it in the WebBox web UI first), ported
+from the `ha_addon_webbox_modbus_v3` add-on:
+
+- New `app/modbus/` package: SMA profile XML parser, a dependency-free
+  asyncio Modbus TCP client (FC 0x03 / 0x10), and high-level
+  read/write/discover operations.
+- Bundled profiles from SMA's WebBox Device Profile bundle:
+  `SI6048MBP.xml` and `SI5048MBP.xml` (Sunny Island 6048 / 5048, 141
+  channels each). Extra profiles can be dropped into a directory
+  pointed to by `WEBBOX_MODBUS_PROFILE_DIR`.
+- Bundled SMA's `unitid_config.xml` (default unit-ID ranges per device
+  category): discovered devices are annotated with their category
+  (Inverter, Sensorbox, String Monitoring Unit, …) and each profile
+  reports its default unit ID / expected range.
+- New REST endpoints:
+  - `GET /api/modbus/profiles` — list bundled profiles
+  - `POST /api/webboxes/{id}/modbus/discover` — read the gateway's
+    device ↔ unit-ID assignment table (unit ID 1, registers 42109…)
+  - `GET /api/webboxes/{id}/modbus/channels` — block-read profile
+    channels from a device unit
+  - `PUT /api/webboxes/{id}/modbus/channels` — write a writable channel
+    (guarded by the stored installer password, mirroring the RPC path)
+- New Modbus tab in the dashboard: unit discovery, live register values
+  with SMA tag-list labels, and a writable-parameter editor.
+- Per-WebBox `modbus_port`, `modbus_unit_id`, and `modbus_profile`
+  options (UI + add-on configuration).
+
 ## 0.4.0
 
 **Major add-on improvements** — the WebBox Dashboard is now a first-class,

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modbusprofile name="Sunny Island - Geraetefamilie" chnlistname="SI604*" devicename="SI 6048" susyid="69" version="1000" mainmodel="8007" model="9159" developer="461">
+<channel address="30057" name="Serial Number" type="U32" write="false" scale="1" disp="RAW" unit=""/>
+<channel address="30061" name="FwVer" type="U32" write="false" scale="1" disp="FW" unit=""/>
+<channel address="30063" name="FwVer2" type="U32" write="false" scale="1" disp="FW" unit=""/>
+<channel address="30199" name="GdRmgTm" type="U32" write="false" scale="1" disp="Dauer" unit="s"/>
+<channel address="30201" name="Mode" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;307;455;35;303"/>
+<channel address="30211" name="Prio" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;338;336;338;337"/>
+<channel address="30213" name="Msg" type="U32" write="false" scale="1" disp="TAGLIST" unit=""/>
+<channel address="30229" name="Tm" type="U32" write="false" scale="1" disp="DT" unit="s"/>
+<channel address="30531" name="E-Total" type="U32" write="false" scale="1" disp="FIX0" unit="kWh"/>
+<channel address="30541" name="OnTmh" type="U32" write="false" scale="3600" disp="Dauer" unit="s"/>
+<channel address="30543" name="TotTmh" type="U32" write="false" scale="3600" disp="Dauer" unit="s"/>
+<channel address="30565" name="GnStrCnt" type="U32" write="false" scale="1" disp="FIX0" unit=""/>
+<channel address="30567" name="AhCntIn" type="U32" write="false" scale="1" disp="FIX0" unit="Ah"/>
+<channel address="30569" name="AhCntOut" type="U32" write="false" scale="1" disp="FIX0" unit="Ah"/>
+<channel address="30571" name="TotLodEgyCnt" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30573" name="GnOpTmh" type="U32" write="false" scale="3600" disp="Dauer" unit="s"/>
+<channel address="30575" name="GnEgyCnt" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30577" name="GdCsmpEgyTdy" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30579" name="GdFeedEgyTdy" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30581" name="GdCsmpEgyMtr" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30583" name="GdFeedEgyMtr" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30585" name="GdFailTms" type="U32" write="false" scale="1" disp="Dauer" unit="s"/>
+<channel address="30587" name="PvEgyMtr" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30589" name="SlfCsmpIncEgy" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30591" name="SlfCsmpIncTdy" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30593" name="SlfCsmpEgy" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30595" name="EgyCntIn" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30597" name="EgyCntOut" type="U32" write="false" scale="1000" disp="FIX0" unit="Wh"/>
+<channel address="30599" name="GdCtcCnt" type="U32" write="false" scale="1" disp="FIX0" unit=""/>
+<channel address="30775" name="TotInvPwrAt" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30777" name="InvPwrAt" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30779" name="InvPwrAtSlv1" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30781" name="InvPwrAtSlv2" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30783" name="InvVtg" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30785" name="InvVtgSlv1" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30787" name="InvVtgSlv2" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30795" name="TotInvCur" type="U32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30797" name="InvCur" type="U32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30799" name="InvCurSlv1" type="U32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30801" name="InvCurSlv2" type="U32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30803" name="InvFrq" type="U32" write="false" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="30805" name="TotInvPwrRt" type="S32" write="false" scale="1000" disp="FIX2" unit="VAr"/>
+<channel address="30807" name="InvPwrRt" type="S32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30809" name="InvPwrRtSlv1" type="S32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30811" name="InvPwrRtSlv2" type="S32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30843" name="TotBatCur" type="S32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30845" name="BatSoc" type="U32" write="false" scale="1" disp="FIX0" unit="%"/>
+<channel address="30847" name="Soh" type="U32" write="false" scale="1" disp="FIX0" unit="%"/>
+<channel address="30849" name="BatTmp" type="S32" write="false" scale="1" disp="TEMP" unit="°C"/>
+<channel address="30851" name="BatVtg" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30853" name="BatChrgOp" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;1767;1768;1770;1769;1769;2184;1770;2184"/>
+<channel address="30855" name="BatChrgVtg" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30857" name="BatCpyThrpCnt" type="S32" write="false" scale="1" disp="FIX0" unit=""/>
+<channel address="30859" name="BatMntStt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;1772;1771;803"/>
+<channel address="30861" name="TotLodPwrAt" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30863" name="TotGnPwrAt" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30865" name="GdCsmpPwrAt" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30867" name="GdFeedPwrAt" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30869" name="TotPvPwr" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30871" name="SlfCsmpPwrAt" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30873" name="SlfCsmpIncPwr" type="S32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30875" name="Rly1Stt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;311;51"/>
+<channel address="30877" name="LodGdConStt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;303;1461;1463;1462"/>
+<channel address="30879" name="GnDmdSrc" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;1773;46;1774;1775;1776;1777;1778"/>
+<channel address="30881" name="PvGdConStt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;1779;1780;1781"/>
+<channel address="30883" name="GdStt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;303;1787;1394;1466;2183;1461;2184;2186;2185;1392;1787"/>
+<channel address="30885" name="TotExtPwrAt" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30887" name="ExtPwrAt" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30889" name="ExtPwrAtSlv1" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30891" name="ExtPwrAtSlv2" type="U32" write="false" scale="1000" disp="FIX0" unit="W"/>
+<channel address="30893" name="TotExtPwrRt" type="U32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30895" name="ExtPwrRt" type="U32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30897" name="ExtPwrRtSlv1" type="U32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30899" name="ExtPwrRtSlv2" type="U32" write="false" scale="1000" disp="FIX0" unit="VAr"/>
+<channel address="30901" name="ExtFrq" type="U32" write="false" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="30903" name="ExtVtg" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30905" name="ExtVtgSlv1" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30907" name="ExtVtgSlv2" type="U32" write="false" scale="1" disp="FIX2" unit="V"/>
+<channel address="30909" name="ExtCur" type="S32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30911" name="ExtCurSlv1" type="S32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30913" name="ExtCurSlv2" type="S32" write="false" scale="1" disp="FIX3" unit="A"/>
+<channel address="30917" name="GnStt" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;303;1392;1788;1789;1790;1791;1792;1793;1794;1795;1392;1796;1787"/>
+<channel address="40009" name="ManStr" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;569;381"/>
+<channel address="40011" name="ErrAckn" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;26"/>
+<channel address="40031" name="BatCpyNom" type="U32" write="false" scale="1" disp="FIX0" unit="Ah"/>
+<channel address="40033" name="BatTmpMax" type="U32" write="true" scale="1" disp="TEMP" unit="°C"/>
+<channel address="40035" name="BatTyp" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;1782;1783;1784;1785"/>
+<channel address="40037" name="BatVtgNom" type="U32" write="false" scale="1" disp="FIX0" unit="V"/>
+<channel address="40039" name="AptTmBoost" type="U32" write="true" scale="1" disp="Dauer" unit="min"/>
+<channel address="40041" name="AptTmEqu" type="U32" write="true" scale="1" disp="Dauer" unit="h"/>
+<channel address="40043" name="AptTmFul" type="U32" write="true" scale="1" disp="Dauer" unit="h"/>
+<channel address="40045" name="BatChrgCurMax" type="U32" write="true" scale="1" disp="FIX3" unit="A"/>
+<channel address="40047" name="GnCurNom" type="U32" write="true" scale="1" disp="FIX3" unit="A"/>
+<channel address="40049" name="GnAutoEna" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;1129;1130"/>
+<channel address="40051" name="GnSocTm1Stp" type="U32" write="true" scale="1" disp="FIX0" unit="%"/>
+<channel address="40053" name="GnSocTm1Str" type="U32" write="true" scale="1" disp="FIX0" unit="%"/>
+<channel address="40055" name="GnManStr" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;1438;381;1467;1776"/>
+<channel address="40057" name="GnPwrEna" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;1129;1130"/>
+<channel address="40059" name="GnPwrStp" type="U32" write="true" scale="1000" disp="FIX0" unit="W"/>
+<channel address="40061" name="GnPwrStr" type="U32" write="true" scale="1000" disp="FIX0" unit="W"/>
+<channel address="40071" name="ExtSrc" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;1799;1801;1802;1803"/>
+<channel address="40073" name="SlfCsmpSOCMin" type="U32" write="true" scale="1" disp="FIX0" unit="%"/>
+<channel address="40075" name="SlfCsmpIncEna" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;1130;1129"/>
+<channel address="40077" name="InvRs" type="U32" write="true" scale="1" disp="FUNKTION_SEC" unit="" mapping="973;1146"/>
+<channel address="40079" name="BatDiChgVtgMin" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40081" name="BatChrgCurMax" type="U32" write="true" scale="1" disp="FIX3" unit="A"/>
+<channel address="40083" name="BatDiChgCurMax" type="U32" write="true" scale="1" disp="FIX3" unit="A"/>
+<channel address="40085" name="ChrgVtgBoost" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40087" name="ChrgVtgFul" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40089" name="ChrgVtgEqu" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40091" name="ChrgVtgFlo" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40093" name="GdVtgMin" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40095" name="GdVtgMax" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40097" name="GdVtgMinDel" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40099" name="GdVtgMaxDel" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40101" name="GdFrqMin" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40103" name="GdFrqMax" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40105" name="GdFrqMinDel" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40107" name="GdFrqMaxDel" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40109" name="Country" type="U32" write="false" scale="1" disp="TAGLIST" unit="" mapping="973;438;42;1013"/>
+<channel address="40111" name="GnVtgMin" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40113" name="GnVtgMax" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40115" name="GnVtgMinDel" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40117" name="GnVtgMaxDel" type="U32" write="true" scale="1" disp="FIX2" unit="V"/>
+<channel address="40119" name="GnFrqMin" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40121" name="GnFrqMax" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40123" name="GnFrqMinDel" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40125" name="GnFrqMaxDel" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40127" name="GnRvPwr" type="U32" write="true" scale="1" disp="FIX0" unit="W"/>
+<channel address="40129" name="GnRvTm" type="U32" write="true" scale="1" disp="Dauer" unit="s"/>
+<channel address="40131" name="GdCurNom" type="U32" write="true" scale="1" disp="FIX2" unit="A"/>
+<channel address="40133" name="GdVtgNom" type="U32" write="true" scale="1" disp="FIX0" unit="V"/>
+<channel address="40135" name="GdFrqNom" type="U32" write="true" scale="1" disp="FIX2" unit="Hz"/>
+<channel address="40137" name="GnAck" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;26"/>
+<channel address="40141" name="AutoStr" type="U32" write="true" scale="1" disp="FIX0" unit=""/>
+<channel address="40143" name="FedInCurAtCom" type="S32" write="true" scale="1" disp="FIX2" unit="A"/>
+<channel address="40145" name="FedInCurRtCom" type="S32" write="true" scale="1" disp="FIX2" unit="A"/>
+<channel address="40147" name="GnCurNomCom" type="U32" write="true" scale="1" disp="FIX2" unit="A"/>
+<channel address="40149" name="FedInPwrAtCom" type="S32" write="true" scale="1000" disp="FIX0" unit="W"/>
+<channel address="40151" name="FedInSpntCom" type="U32" write="true" scale="1" disp="TAGLIST" unit="" mapping="973;803;802"/>
+<channel address="40153" name="FedInPwrRtCom" type="S32" write="true" scale="1000" disp="FIX0" unit="VAr"/>
+</modbusprofile>

@@ -112,7 +112,7 @@ the HACS custom integration.
 
 1. Go to **Settings → Add-ons → Add-on Store** in Home Assistant.
 2. Add this repository as a custom repository:  
-   `https://github.com/mobiletru/ha_addon_webbox`
+   `https://github.com/mobiletru/HA_SMA_WEBBOX`
 3. Install **WebBox Dashboard**, configure (optional), and start it.
 4. Use **Open Web UI** or the sidebar panel.
 
