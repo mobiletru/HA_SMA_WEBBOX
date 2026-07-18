@@ -1,9 +1,10 @@
-# WebBox Dashboard
+# Sunny Island WebBox
 
 **Home Assistant OS / Supervisor Add-on**
 
-A first-class Home Assistant add-on that gives you a single, modern dashboard for one
-or more **SMA Sunny WebBox** data loggers.
+A first-class Home Assistant add-on that gives you a single, modern dashboard for
+**SMA Sunny WebBox** RPC + Modbus — live plant data and Sunny Island parameter
+tuning for one or more WebBoxes.
 
 ## Features
 
@@ -52,15 +53,18 @@ the update will be offered in the add-on page.
 
 ```yaml
 log_level: info        # trace | debug | info | notice | warning | error | fatal
-scan_subnet: "192.168.1"  # optional /24 prefix used as default for "Scan…"
+scan_subnet: "192.168.100"  # optional /24 prefix used as default for "Scan…"
 cloudflare_tunnel_token: ""  # paste from Cloudflare Zero Trust → Networks → Tunnels (see below)
 webboxes:              # optional pre-seeded list (you can also add WebBoxes from the UI)
-  - name: Roof array
-    host: 192.168.1.42
-    password: ""               # WebBox "user" password (read-only access)
-    installer_password: ""     # required to write parameters
+  - name: Sunny Island WebBox
+    host: 192.168.100.180
+    password: "sma"            # WebBox "user" password (read access)
+    installer_password: "sma"  # required to write parameters
     poll_interval: 30
-    public_url: "https://webbox.example.com"  # Cloudflare Tunnel hostname for this WebBox
+    modbus_port: 502
+    modbus_unit_id: 3
+    modbus_profile: SI6048MBP
+    public_url: ""             # optional Cloudflare Tunnel hostname for this WebBox
 ```
 
 WebBoxes added via the UI are stored in `/data/webboxes.json` and survive

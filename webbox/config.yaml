@@ -1,7 +1,10 @@
-name: WebBox Dashboard
-version: "0.5.2"
+name: Sunny Island WebBox
+version: "0.5.3"
 slug: webbox
-description: Modern dashboard for SMA Sunny WebBox data loggers — discover, monitor, and tune every WebBox on your network.
+description: >-
+  Sunny Island WebBox RPC + Modbus parameter dashboard - live plant data,
+  curated SI parameters, and Modbus TCP register read/write for SMA Sunny
+  Island systems.
 url: https://github.com/mobiletru/ha_addon_webbox
 arch:
   - aarch64
@@ -15,7 +18,7 @@ host_network: false
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:solar-power-variant
-panel_title: WebBox
+panel_title: Sunny Island
 watchdog: "http://[HOST]:[PORT:8099]/api/health"
 ports:
   8099/tcp: 8099
@@ -26,9 +29,17 @@ map:
   - config:rw
 options:
   log_level: info
-  scan_subnet: ""
+  scan_subnet: "192.168.100"
   cloudflare_tunnel_token: ""
-  webboxes: []
+  webboxes:
+    - name: Sunny Island WebBox
+      host: "192.168.100.180"
+      password: "sma"
+      installer_password: "sma"
+      poll_interval: 30
+      modbus_port: 502
+      modbus_unit_id: 3
+      modbus_profile: SI6048MBP
 schema:
   log_level: list(trace|debug|info|notice|warning|error|fatal)
   scan_subnet: str?
@@ -40,9 +51,6 @@ schema:
       installer_password: password?
       poll_interval: int(5,3600)?
       public_url: url?
-      modbus_port: int(1,65535)?
-      modbus_unit_id: int(1,255)?
-      modbus_profile: str?
       modbus_port: int(1,65535)?
       modbus_unit_id: int(1,255)?
       modbus_profile: str?

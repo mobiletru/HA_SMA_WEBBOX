@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.3
+
+- Renamed add-on UI to **Sunny Island WebBox** (sidebar: Sunny Island).
+- Pre-seed defaults for local plant: WebBox at `192.168.100.180`, Modbus
+  TCP 502 / unit 3 / profile `SI6048MBP`, scan subnet `192.168.100`.
+- Removed duplicate Modbus fields from the configuration schema.
+
 ## 0.5.2
 
 **Code-review fixes for the Modbus feature:**
