@@ -1,7 +1,11 @@
-# MOVED — retired
+# Retired — use Sunny Island only
 
-This repository is **retired**.
+This repository is **no longer an installable app**.
 
-**Use only:** https://github.com/mobiletru/sunny_island
+All plant apps are combined here:
 
-This repo may be deleted.
+**https://github.com/mobiletru/sunny_island**
+
+SMA WebBox / Sunny Island parameters live in that one app (Tesla EVTV BMS integration + plant UI).
+
+Install once: **Settings → Apps → Repositories** → add that URL.

@@ -1,4 +1,2 @@
-name: WebBox Dashboard
-url: https://github.com/mobiletru/HA_SMA_WEBBOX
-maintainer: mobiletru
-description: SMA Sunny WebBox dashboard add-on for Home Assistant OS (with optional Cloudflare Tunnel support)
+# RETIRED — not an app repository.
+# Use only: https://github.com/mobiletru/sunny_island
